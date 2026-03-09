@@ -3,338 +3,203 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ORBITAL TITAN | ARSENAL</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&display=swap');
-        
-        :root {
-            --neon: #00f2ff;
-            --danger: #ff0055;
-            --bg: #050505;
-            --panel: rgba(10, 15, 25, 0.98);
-        }
+    <title>ORBITAL TITAN | ONLINE</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&display=swap" rel="stylesheet">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-        body { 
-            margin: 0; background: var(--bg); color: #fff;
-            font-family: 'Orbitron', sans-serif; 
-            overflow: hidden; touch-action: none; 
-        }
+    <style>
+        :root { --neon: #00f2ff; --danger: #ff0055; --gold: #ffd700; --bg: #050505; }
+        body { margin: 0; background: var(--bg); color: #fff; font-family: 'Orbitron', sans-serif; overflow: hidden; touch-action: none; }
         canvas { display: block; position: fixed; inset: 0; z-index: 1; }
         
-        /* --- ECRANS --- */
-        .screen {
-            position: fixed; inset: 0; z-index: 2000;
-            display: none; flex-direction: column; justify-content: center; align-items: center;
-            background: rgba(0,0,0,0.85); backdrop-filter: blur(12px);
-        }
-
-        .panel {
-            background: var(--panel); padding: 40px; border: 2px solid var(--neon);
-            width: 85%; max-width: 420px; text-align: center;
-            box-shadow: 0 0 40px rgba(0, 242, 255, 0.25);
-            clip-path: polygon(10% 0, 100% 0, 100% 90%, 90% 100%, 0 100%, 0 10%);
-        }
-
-        /* --- HUD --- */
-        #hud {
-            position: fixed; top: 0; left: 0; width: 100%; padding: 20px;
-            display: none; grid-template-columns: 1fr 1fr 1fr; align-items: center;
-            z-index: 1000; box-sizing: border-box; pointer-events: none;
-        }
-        .hud-v { font-size: 20px; font-weight: 900; text-shadow: 0 0 10px var(--neon); }
-        .xp-bar-bg { width: 120px; height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; margin: 5px auto; overflow: hidden; border: 1px solid var(--neon); }
-        #xp-fill { width: 0%; height: 100%; background: var(--neon); box-shadow: 0 0 10px var(--neon); transition: width 0.3s; }
-
-        /* --- BOUTONS --- */
-        .btn {
-            background: transparent; border: 1px solid var(--neon); color: var(--neon);
-            padding: 15px; font-family: 'Orbitron'; font-weight: 900;
-            text-transform: uppercase; cursor: pointer; margin: 8px 0; width: 100%;
-            clip-path: polygon(5% 0, 100% 0, 100% 70%, 95% 100%, 0 100%, 0 30%);
-            pointer-events: auto;
-        }
+        .screen { position: fixed; inset: 0; z-index: 2000; display: none; flex-direction: column; justify-content: center; align-items: center; background: rgba(0,0,0,0.9); backdrop-filter: blur(10px); }
+        .panel { background: rgba(10, 15, 25, 0.95); padding: 30px; border: 2px solid var(--neon); width: 85%; max-width: 400px; text-align: center; clip-path: polygon(10% 0, 100% 0, 100% 90%, 90% 100%, 0 100%, 0 10%); }
+        
+        .btn { background: transparent; border: 1px solid var(--neon); color: var(--neon); padding: 12px; font-family: 'Orbitron'; font-weight: 900; cursor: pointer; margin: 8px 0; width: 100%; text-transform: uppercase; transition: 0.2s; }
         .btn:active { background: var(--neon); color: #000; }
-        .btn:disabled { border-color: #333; color: #333; opacity: 0.5; }
+        .btn-google { background: #fff; color: #000; border: none; display: flex; align-items: center; justify-content: center; gap: 10px; }
 
-        #ultimate-btn {
-            position: fixed; bottom: 30px; right: 30px; width: 85px; height: 85px;
-            border-radius: 50%; border: 4px solid #222; background: rgba(0,0,0,0.9);
-            z-index: 1500; display: none; justify-content: center; align-items: center;
-            font-size: 11px; font-weight: 900; color: #444; cursor: pointer;
-        }
-
-        .pause-trigger { pointer-events: auto; background: var(--neon); color: #000; border: none; padding: 8px 18px; font-weight: 900; border-radius: 4px; cursor: pointer; }
+        #leaderboard { margin-top: 20px; font-size: 11px; text-align: left; background: rgba(255,255,255,0.05); padding: 10px; border: 1px solid rgba(0,242,255,0.2); }
+        .player-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        
+        #hud { position: fixed; top: 0; left: 0; width: 100%; padding: 15px; display: none; grid-template-columns: 1fr 1fr 1fr; z-index: 1000; pointer-events: none; box-sizing: border-box; }
+        .league-tag { font-size: 10px; font-weight: 900; padding: 2px 6px; border-radius: 3px; margin-left: 5px; vertical-align: middle; }
     </style>
 </head>
 <body>
 
     <div id="hud">
-        <div><span style="font-size: 9px; opacity: 0.7;">DATA</span><br><span id="v-score" class="hud-v">0</span></div>
-        <div style="text-align: center;">
-            <span id="v-lvl" style="font-size: 11px; color: var(--neon);">RANK 1</span>
-            <div class="xp-bar-bg"><div id="xp-fill"></div></div>
-        </div>
-        <div style="text-align: right;"><button class="pause-trigger" onclick="pauseGame()">PAUSE</button></div>
+        <div>SCORE<br><span id="v-score" style="font-size: 20px; color: var(--neon);">0</span></div>
+        <div style="text-align: center;">LIGUE<br><span id="v-league" style="font-size: 12px; font-weight: 900;">BRONZE</span></div>
+        <div style="text-align: right;"><button class="btn" style="width:auto; padding:5px 12px; pointer-events:auto;" onclick="pauseGame()">PAUSE</button></div>
     </div>
 
-    <button id="ultimate-btn" onclick="triggerUlt()">READY</button>
-
-    <div id="scr-main" class="screen" style="display: flex;">
+    <div id="scr-login" class="screen" style="display: flex;">
         <div class="panel">
-            <h1 style="font-size: 42px; margin: 0; color: var(--neon);">TITAN</h1>
-            <p style="letter-spacing: 5px; font-size: 10px; margin-bottom: 30px;">ARSENAL PROTOCOL</p>
-            <div id="m-credits" style="font-size: 24px; margin-bottom: 25px;">0 CR</div>
-            <button class="btn" onclick="startGame()">ENGAGE</button>
-            <button class="btn" onclick="showScreen('scr-shop')">ARMORY</button>
+            <h1 style="color: var(--neon); font-size: 42px; margin:0">TITAN</h1>
+            <p style="font-size: 10px; letter-spacing: 3px; margin-bottom:25px;">ONLINE PROTOCOL</p>
+            <button class="btn btn-google" onclick="loginWithGoogle()">
+                <img src="https://www.google.com/favicon.ico" width="18"> LOGIN WITH GOOGLE
+            </button>
+            <p style="font-size: 9px; opacity: 0.6; margin-top:15px;">Connecte-toi pour sauvegarder ton arsenal et grimper dans le classement mondial.</p>
         </div>
     </div>
 
-    <div id="scr-shop" class="screen">
+    <div id="scr-main" class="screen">
         <div class="panel">
-            <h2 style="color: var(--neon);">ARMORY</h2>
-            <div style="margin: 20px 0;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid rgba(0,242,255,0.1); padding-bottom:10px;">
-                    <div style="text-align:left;"><b>SHIELD</b><br><span id="l-shield" style="font-size:9px;">LVL 1</span></div>
-                    <button class="btn" id="b-shield" style="width:110px;" onclick="buy('shield')">50</button>
-                </div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid rgba(0,242,255,0.1); padding-bottom:10px;">
-                    <div style="text-align:left;"><b>RAILGUN</b><br><span id="l-cannon" style="font-size:9px;">LOCKED</span></div>
-                    <button class="btn" id="b-cannon" style="width:110px;" onclick="buy('cannon')">150</button>
-                </div>
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <div style="text-align:left;"><b>MISSILES</b><br><span id="l-missile" style="font-size:9px; color:var(--danger)">RANK 3 REQ.</span></div>
-                    <button class="btn" id="b-missile" style="width:110px;" onclick="buy('missile')">400</button>
-                </div>
+            <div id="user-info" style="margin-bottom: 20px;"></div>
+            <button class="btn" onclick="startGame()">DEPLOIEMENT UNITÉ</button>
+            <button class="btn" onclick="showScreen('scr-shop')">ARSENAL / LIGUE</button>
+            
+            <div id="leaderboard">
+                <div style="text-align:center; font-weight:900; color:var(--gold); margin-bottom:8px;">TOP 5 MONDIAL</div>
+                <div id="leaderboard-list">Récupération des données...</div>
             </div>
-            <button class="btn" onclick="showScreen('scr-main')">RETURN</button>
-        </div>
-    </div>
-
-    <div id="scr-pause" class="screen">
-        <div class="panel">
-            <h1>PAUSE</h1>
-            <button class="btn" onclick="resumeGame()">RESUME</button>
-            <button class="btn" onclick="location.reload()">ABORT</button>
-        </div>
-    </div>
-
-    <div id="scr-over" class="screen">
-        <div class="panel">
-            <h1 style="color: var(--danger);">TERMINATED</h1>
-            <p id="f-score">SCORE: 0</p>
-            <p id="f-credits" style="color: var(--neon);">+ 0 CR</p>
-            <button class="btn" onclick="startGame()">REBOOT</button>
-            <button class="btn" onclick="showScreen('scr-main')">MENU</button>
         </div>
     </div>
 
     <canvas id="game"></canvas>
 
 <script>
+// --- CONFIGURATION FIREBASE (TES CLES) ---
+const firebaseConfig = {
+    apiKey: "AIzaSyCSCBazFl8Ent9fin0Xw1rWaMgP9yyKNgA",
+    authDomain: "titan-online-e9286.firebaseapp.com",
+    projectId: "titan-online-e9286",
+    storageBucket: "titan-online-e9286.firebasestorage.app",
+    messagingSenderId: "486050054558",
+    appId: "1:486050054558:web:7364e0f450d151b96d568f"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const auth = firebase.auth();
+
+// --- VARIABLES ---
+let data = { name: "Pilote", photo: "", highscore: 0, credits: 0, rank: 1 };
+let state = 'MENU', score = 0, player = { a: 0, rad: 105, w: 0.6, s: 0.16 };
+let enemies = [], bullets = [];
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
+let w, h, cx, cy;
 
-let data = JSON.parse(localStorage.getItem('titan_v6')) || { credits: 0, sLvl: 1, hasC: false, hasM: false, xp: 0, rank: 1 };
-const save = () => { localStorage.setItem('titan_v6', JSON.stringify(data)); uUI(); };
-
-let w, h, cx, cy, state = 'MENU', isPaused = false;
-let score = 0, currentCreds = 0, frame = 0, ultCharge = 0, shake = 0;
-let player = { a: 0, rad: 105, w: 0.6, s: 0.16 };
-let enemies = [], bullets = [], particles = [];
-let keys = { L: false, R: false };
-
-function uUI() {
-    document.getElementById('m-credits').innerText = data.credits + " CR";
-    document.getElementById('l-shield').innerText = "LVL " + data.sLvl;
-    document.getElementById('l-cannon').innerText = data.hasC ? "ACTIVE" : "LOCKED";
-    document.getElementById('l-missile').innerText = data.hasM ? "ACTIVE" : (data.rank < 3 ? "RANK 3 REQ." : "400 CR");
-    
-    document.getElementById('b-shield').disabled = data.credits < data.sLvl * 50 || data.sLvl >= 5;
-    document.getElementById('b-cannon').disabled = data.credits < 150 || data.hasC;
-    document.getElementById('b-missile').disabled = data.credits < 400 || data.hasM || data.rank < 3;
-    
-    document.getElementById('v-lvl').innerText = "RANK " + data.rank;
-    document.getElementById('xp-fill').style.width = (data.xp % 100) + "%";
+// --- LOGIQUE LIGUES ---
+function getLeague(s) {
+    if(s >= 5000) return { n: "MAÎTRE", c: "#ff0055" };
+    if(s >= 2000) return { n: "DIAMANT", c: "#00f2ff" };
+    if(s >= 1000) return { n: "OR", c: "#ffd700" };
+    if(s >= 500)  return { n: "ARGENT", c: "#c0c0c0" };
+    return { n: "BRONZE", c: "#cd7f32" };
 }
+
+// --- CONNEXION ---
+function loginWithGoogle() {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider).then(res => {
+        data.name = res.user.displayName;
+        data.photo = res.user.photoURL;
+        loadOnlineData(res.user.uid);
+    }).catch(e => {
+        alert("Erreur de connexion : Vérifie les 'Authorized Domains' sur Firebase !");
+        console.error(e);
+    });
+}
+
+function loadOnlineData(uid) {
+    db.ref('players/' + uid).on('value', snap => {
+        if(snap.exists()) data = {...data, ...snap.val()};
+        showScreen('scr-main');
+        updateMenuUI();
+    });
+}
+
+function saveOnlineData() {
+    const user = auth.currentUser;
+    if(user) {
+        db.ref('players/' + user.uid).update(data);
+        db.ref('leaderboard/' + user.uid).set({ 
+            name: data.name, 
+            score: data.highscore, 
+            photo: data.photo 
+        });
+    }
+}
+
+function updateMenuUI() {
+    const league = getLeague(data.highscore);
+    document.getElementById('user-info').innerHTML = `
+        <img src="${data.photo}" width="45" style="border-radius:50%; border:2px solid ${league.c}"><br>
+        <span style="font-weight:900">${data.name}</span><br>
+        <span class="league-tag" style="background:${league.c}; color:#000">${league.n}</span>
+    `;
+    updateLeaderboard();
+}
+
+function updateLeaderboard() {
+    db.ref('leaderboard').orderByChild('score').limitToLast(5).on('value', snap => {
+        const list = document.getElementById('leaderboard-list');
+        list.innerHTML = "";
+        let players = [];
+        snap.forEach(child => players.push(child.val()));
+        players.reverse().forEach((p, i) => {
+            const l = getLeague(p.score);
+            list.innerHTML += `
+                <div class="player-row">
+                    <span>#${i+1} ${p.name.split(' ')[0]}</span>
+                    <span style="color:${l.c}; font-weight:900;">${p.score}</span>
+                </div>`;
+        });
+    });
+}
+
+// --- MOTEUR DE JEU ---
+function resize() { w=canvas.width=window.innerWidth; h=canvas.height=window.innerHeight; cx=w/2; cy=h/2; }
+window.onresize = resize; resize();
 
 function showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
-    document.getElementById(id).style.display = 'flex';
-    uUI();
+    if(id !== 'none') document.getElementById(id).style.display = 'flex';
 }
-
-function buy(t) {
-    if(t === 'shield') { data.credits -= data.sLvl*50; data.sLvl++; }
-    if(t === 'cannon') { data.credits -= 150; data.hasC = true; }
-    if(t === 'missile') { data.credits -= 400; data.hasM = true; }
-    save();
-}
-
-function resize() {
-    w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight;
-    cx = w/2; cy = h/2;
-}
-window.onresize = resize; resize();
-
-canvas.addEventListener('touchstart', (e) => {
-    if(state !== 'PLAY') return; e.preventDefault();
-    for(let t of e.touches) { if(t.clientX < w/2) keys.L = true; else keys.R = true; }
-}, {passive: false});
-canvas.addEventListener('touchend', () => { keys.L = false; keys.R = false; });
 
 function startGame() {
-    state = 'PLAY'; isPaused = false; score = 0; currentCreds = 0; frame = 0; ultCharge = 0;
-    enemies = []; bullets = []; particles = [];
-    player.w = 0.45 + (data.sLvl * 0.1);
-    document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+    state = 'PLAY'; score = 0; enemies = []; bullets = [];
     document.getElementById('hud').style.display = 'grid';
-    document.getElementById('ultimate-btn').style.display = 'flex';
-    uUI();
+    document.getElementById('v-score').innerText = "0";
+    const league = getLeague(data.highscore);
+    document.getElementById('v-league').innerText = league.n;
+    document.getElementById('v-league').style.color = league.c;
+    showScreen('none');
 }
 
-function pauseGame() { isPaused = true; showScreen('scr-pause'); }
-function resumeGame() { isPaused = false; document.getElementById('scr-pause').style.display = 'none'; }
+function pauseGame() { state = 'PAUSE'; showScreen('scr-main'); }
 
-function triggerUlt() {
-    if(ultCharge < 100) return;
-    enemies = []; ultCharge = 0; shake = 30;
-    for(let i=0; i<50; i++) particles.push({x:cx, y:cy, vx:(Math.random()-0.5)*20, vy:(Math.random()-0.5)*20, l:1, c:data.hasM ? '#ff0055' : '#00f2ff'});
-}
-
-function spawnExplosion(x, y, color) {
-    for(let i=0; i<15; i++) {
-        particles.push({x: x, y: y, vx: (Math.random()-0.5)*10, vy: (Math.random()-0.5)*10, l: 1, c: color});
-    }
-}
-
-function update() {
-    if(state !== 'PLAY' || isPaused) return;
-    frame++;
-    if(keys.L) player.a -= player.s;
-    if(keys.R) player.a += player.s;
-    if(shake > 0) shake *= 0.9;
-
-    if(ultCharge < 100) ultCharge += 0.1;
-    let uBtn = document.getElementById('ultimate-btn');
-    uBtn.style.color = ultCharge >= 100 ? '#00f2ff' : '#444';
-    uBtn.style.borderColor = ultCharge >= 100 ? '#00f2ff' : '#222';
-
-    // Arme 1 : Railgun
-    if(data.hasC && frame % 25 === 0) {
-        bullets.push({ x: cx + Math.cos(player.a)*player.rad, y: cy + Math.sin(player.a)*player.rad, a: player.a, type: 'rail' });
-    }
-    // Arme 2 : Missile
-    if(data.hasM && frame % 80 === 0) {
-        bullets.push({ x: cx + Math.cos(player.a)*player.rad, y: cy + Math.sin(player.a)*player.rad, a: player.a, type: 'missile' });
-    }
-
-    bullets.forEach((b, bi) => {
-        let speed = b.type === 'rail' ? 12 : 6;
-        b.x += Math.cos(b.a)*speed; b.y += Math.sin(b.a)*speed;
-        if(b.x<0||b.x>w||b.y<0||b.y>h) bullets.splice(bi,1);
-    });
-
-    if(frame % Math.max(10, 50 - Math.floor(score/10)) === 0) {
-        let a = Math.random()*Math.PI*2;
-        enemies.push({ x: cx + Math.cos(a)*w, y: cy + Math.sin(a)*w, s: 3.5+(score*0.05) });
-    }
-
-    enemies.forEach((en, i) => {
-        let a = Math.atan2(cy - en.y, cx - en.x);
-        en.x += Math.cos(a)*en.s; en.y += Math.sin(a)*en.s;
-        let d = Math.hypot(cx - en.x, cy - en.y);
-
-        bullets.forEach((b, bi) => {
-            if(Math.hypot(b.x-en.x, b.y-en.y) < 25) {
-                if(b.type === 'missile') {
-                    spawnExplosion(en.x, en.y, '#ff0055');
-                    // Damage zone : élimine les ennemis proches
-                    enemies.forEach((en2, i2) => {
-                        if(Math.hypot(en2.x-en.x, en2.y-en.y) < 80) { enemies.splice(i2,1); score++; currentCreds++; data.xp += 5; }
-                    });
-                } else {
-                    spawnExplosion(en.x, en.y, '#00f2ff');
-                    enemies.splice(i,1); score++; currentCreds++; data.xp += 5;
-                }
-                bullets.splice(bi,1);
-                if(data.xp >= data.rank * 100) { data.rank++; }
-                document.getElementById('v-score').innerText = score;
-                uUI();
-            }
-        });
-
-        if(!enemies[i]) return;
-
-        if(d < player.rad + 10 && d > player.rad - 15) {
-            let aE = (Math.atan2(en.y - cy, en.x - cx) + Math.PI*2) % (Math.PI*2);
-            let pA = (player.a + Math.PI*2) % (Math.PI*2);
-            let diff = Math.abs(aE - pA);
-            if(diff > Math.PI) diff = Math.PI*2 - diff;
-            if(diff < player.w) {
-                spawnExplosion(en.x, en.y, '#fff');
-                enemies.splice(i,1); score++; currentCreds++; data.xp += 2;
-                document.getElementById('v-score').innerText = score;
-                uUI();
-            }
-        }
-
-        if(d < 45) {
-            state = 'OVER'; data.credits += currentCreds; save();
-            document.getElementById('f-score').innerText = "SCORE: " + score;
-            document.getElementById('f-credits').innerText = "+ " + currentCreds + " CR";
-            document.getElementById('hud').style.display = 'none';
-            document.getElementById('ultimate-btn').style.display = 'none';
-            showScreen('scr-over');
-        }
-    });
-
-    particles.forEach((p, i) => {
-        p.x += p.vx; p.y += p.vy; p.l -= 0.04;
-        if(p.l <= 0) particles.splice(i,1);
-    });
-}
-
+// --- BOUCLE DE DESSIN ---
 function draw() {
     ctx.fillStyle = '#050505'; ctx.fillRect(0,0,w,h);
-    ctx.save();
-    if(shake > 1) ctx.translate(Math.random()*shake, Math.random()*shake);
-
+    
     // Planète (Design 5.1 Restored)
     let g = ctx.createRadialGradient(cx, cy, 0, cx, cy, 45);
     g.addColorStop(0, '#fff'); g.addColorStop(0.3, '#00f2ff'); g.addColorStop(1, 'transparent');
     ctx.beginPath(); ctx.arc(cx, cy, 45, 0, Math.PI*2); ctx.fillStyle = g; ctx.fill();
-    
-    // Hex Shield aura
-    ctx.strokeStyle = 'rgba(0, 242, 255, 0.2)'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.arc(cx, cy, 55, 0, Math.PI*2); ctx.stroke();
 
     if(state === 'PLAY') {
+        // Shield
         ctx.beginPath();
         ctx.arc(cx, cy, player.rad, player.a - player.w, player.a + player.w);
         ctx.strokeStyle = '#fff'; ctx.lineWidth = 8; ctx.lineCap = 'butt';
         ctx.stroke();
     }
-
-    bullets.forEach(b => {
-        ctx.fillStyle = b.type === 'missile' ? '#ff0055' : '#00f2ff';
-        ctx.beginPath(); ctx.arc(b.x, b.y, b.type === 'missile' ? 6 : 4, 0, Math.PI*2); ctx.fill();
-        if(b.type === 'missile') { // Traînée de fumée
-            particles.push({x:b.x, y:b.y, vx:0, vy:0, l:0.5, c:'rgba(255,0,85,0.3)'});
-        }
-    });
-
-    ctx.fillStyle = '#ff0055';
-    enemies.forEach(en => { ctx.beginPath(); ctx.arc(en.x, en.y, 8, 0, Math.PI*2); ctx.fill(); });
-
-    particles.forEach(p => { ctx.globalAlpha = p.l; ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI*2); ctx.fill(); });
-    ctx.globalAlpha = 1;
-
-    ctx.restore();
-    update();
+    
     requestAnimationFrame(draw);
 }
-uUI(); draw();
+
+draw();
 </script>
 </body>
-                                                                       </html>
+    </html>
+    
+
                         

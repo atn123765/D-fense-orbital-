@@ -3,312 +3,338 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ORBITAL CORE</title>
+    <title>ORBITAL TITAN | ARSENAL</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&display=swap');
+        
         :root {
-            --bg: #020617;
-            --accent: #38bdf8;
-            --danger: #ef4444;
-            --text: #f8fafc;
-            --subtext: #94a3b8;
-            --panel-bg: rgba(15, 23, 42, 0.8);
+            --neon: #00f2ff;
+            --danger: #ff0055;
+            --bg: #050505;
+            --panel: rgba(10, 15, 25, 0.98);
         }
 
         body { 
-            margin: 0; background: var(--bg); color: var(--text);
-            font-family: 'Inter', -apple-system, sans-serif; 
-            overflow: hidden; touch-action: none; user-select: none;
+            margin: 0; background: var(--bg); color: #fff;
+            font-family: 'Orbitron', sans-serif; 
+            overflow: hidden; touch-action: none; 
         }
-        canvas { display: block; }
+        canvas { display: block; position: fixed; inset: 0; z-index: 1; }
         
+        /* --- ECRANS --- */
         .screen {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            position: fixed; inset: 0; z-index: 2000;
             display: none; flex-direction: column; justify-content: center; align-items: center;
-            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(12px);
         }
-        #screen-game { backdrop-filter: none; pointer-events: none; justify-content: space-between; padding: 30px; box-sizing: border-box; }
-        
+
         .panel {
-            background: var(--panel-bg); padding: 40px; border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.08); width: 85%; max-width: 380px;
-            text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            background: var(--panel); padding: 40px; border: 2px solid var(--neon);
+            width: 85%; max-width: 420px; text-align: center;
+            box-shadow: 0 0 40px rgba(0, 242, 255, 0.25);
+            clip-path: polygon(10% 0, 100% 0, 100% 90%, 90% 100%, 0 100%, 0 10%);
         }
-        
-        h1 { margin: 0; font-size: 28px; font-weight: 900; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text); }
-        .divider { height: 1px; background: var(--accent); width: 40px; margin: 15px auto 25px; opacity: 0.5; }
-        h2 { margin: 0 0 20px 0; font-size: 14px; font-weight: 500; color: var(--subtext); text-transform: uppercase; letter-spacing: 0.1em; }
-        
-        .stats-bar { font-size: 16px; margin-bottom: 25px; font-weight: 600; color: var(--accent); }
-        
-        button {
-            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
-            color: var(--text); padding: 18px; font-size: 13px; font-weight: 700;
-            border-radius: 4px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            width: 100%; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.1em;
-        }
-        button:active { background: var(--accent); color: var(--bg); border-color: var(--accent); transform: translateY(2px); }
-        button.primary { background: var(--accent); color: var(--bg); border: none; }
-        button.secondary { background: transparent; border: none; color: var(--subtext); font-size: 11px; margin-top: 10px; }
-        button:disabled { opacity: 0.2; pointer-events: none; }
 
-        .shop-row { 
-            display: flex; justify-content: space-between; align-items: center; 
-            background: rgba(255,255,255,0.03); padding: 12px 15px; border-radius: 6px; 
-            margin-bottom: 8px; text-align: left; border: 1px solid rgba(255,255,255,0.05);
+        /* --- HUD --- */
+        #hud {
+            position: fixed; top: 0; left: 0; width: 100%; padding: 20px;
+            display: none; grid-template-columns: 1fr 1fr 1fr; align-items: center;
+            z-index: 1000; box-sizing: border-box; pointer-events: none;
         }
-        .shop-row div b { display: block; font-size: 12px; color: var(--text); }
-        .shop-row div span { font-size: 10px; color: var(--subtext); }
-        .shop-row button { width: auto; margin: 0; padding: 8px 12px; font-size: 11px; }
+        .hud-v { font-size: 20px; font-weight: 900; text-shadow: 0 0 10px var(--neon); }
+        .xp-bar-bg { width: 120px; height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; margin: 5px auto; overflow: hidden; border: 1px solid var(--neon); }
+        #xp-fill { width: 0%; height: 100%; background: var(--neon); box-shadow: 0 0 10px var(--neon); transition: width 0.3s; }
 
-        .hud-top { display: flex; justify-content: space-between; width: 100%; font-size: 14px; font-weight: 800; letter-spacing: 0.1em; }
+        /* --- BOUTONS --- */
+        .btn {
+            background: transparent; border: 1px solid var(--neon); color: var(--neon);
+            padding: 15px; font-family: 'Orbitron'; font-weight: 900;
+            text-transform: uppercase; cursor: pointer; margin: 8px 0; width: 100%;
+            clip-path: polygon(5% 0, 100% 0, 100% 70%, 95% 100%, 0 100%, 0 30%);
+            pointer-events: auto;
+        }
+        .btn:active { background: var(--neon); color: #000; }
+        .btn:disabled { border-color: #333; color: #333; opacity: 0.5; }
+
+        #ultimate-btn {
+            position: fixed; bottom: 30px; right: 30px; width: 85px; height: 85px;
+            border-radius: 50%; border: 4px solid #222; background: rgba(0,0,0,0.9);
+            z-index: 1500; display: none; justify-content: center; align-items: center;
+            font-size: 11px; font-weight: 900; color: #444; cursor: pointer;
+        }
+
+        .pause-trigger { pointer-events: auto; background: var(--neon); color: #000; border: none; padding: 8px 18px; font-weight: 900; border-radius: 4px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <div id="screen-game" class="screen">
-        <div class="hud-top">
-            <span id="hud-score">SCORE 0</span>
-            <span id="hud-credits" style="color: var(--accent)">CREDITS 0</span>
+    <div id="hud">
+        <div><span style="font-size: 9px; opacity: 0.7;">DATA</span><br><span id="v-score" class="hud-v">0</span></div>
+        <div style="text-align: center;">
+            <span id="v-lvl" style="font-size: 11px; color: var(--neon);">RANK 1</span>
+            <div class="xp-bar-bg"><div id="xp-fill"></div></div>
+        </div>
+        <div style="text-align: right;"><button class="pause-trigger" onclick="pauseGame()">PAUSE</button></div>
+    </div>
+
+    <button id="ultimate-btn" onclick="triggerUlt()">READY</button>
+
+    <div id="scr-main" class="screen" style="display: flex;">
+        <div class="panel">
+            <h1 style="font-size: 42px; margin: 0; color: var(--neon);">TITAN</h1>
+            <p style="letter-spacing: 5px; font-size: 10px; margin-bottom: 30px;">ARSENAL PROTOCOL</p>
+            <div id="m-credits" style="font-size: 24px; margin-bottom: 25px;">0 CR</div>
+            <button class="btn" onclick="startGame()">ENGAGE</button>
+            <button class="btn" onclick="showScreen('scr-shop')">ARMORY</button>
         </div>
     </div>
 
-    <div id="screen-main" class="screen">
+    <div id="scr-shop" class="screen">
         <div class="panel">
-            <h1>ORBITAL</h1>
-            <div class="divider"></div>
-            <h2>Système de Défense Alpha</h2>
-            <div class="stats-bar" id="main-credits">CREDITS 0</div>
-            <button class="primary" onclick="startGame()">Initialiser</button>
-            <button onclick="nav('screen-shop')">Arsenal & Upgrades</button>
-            <button onclick="nav('screen-settings')">Configuration</button>
-        </div>
-    </div>
-
-    <div id="screen-shop" class="screen">
-        <div class="panel">
-            <h1>ARSENAL</h1>
-            <div class="divider"></div>
-            <div class="stats-bar" id="shop-credits">CREDITS 0</div>
-            
-            <div class="shop-row">
-                <div><b>DIAMETRE BOUCLIER</b><span id="lvl-shield">NIVEAU 1</span></div>
-                <button id="btn-up-shield" onclick="buyShield()">50 C</button>
+            <h2 style="color: var(--neon);">ARMORY</h2>
+            <div style="margin: 20px 0;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid rgba(0,242,255,0.1); padding-bottom:10px;">
+                    <div style="text-align:left;"><b>SHIELD</b><br><span id="l-shield" style="font-size:9px;">LVL 1</span></div>
+                    <button class="btn" id="b-shield" style="width:110px;" onclick="buy('shield')">50</button>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid rgba(0,242,255,0.1); padding-bottom:10px;">
+                    <div style="text-align:left;"><b>RAILGUN</b><br><span id="l-cannon" style="font-size:9px;">LOCKED</span></div>
+                    <button class="btn" id="b-cannon" style="width:110px;" onclick="buy('cannon')">150</button>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="text-align:left;"><b>MISSILES</b><br><span id="l-missile" style="font-size:9px; color:var(--danger)">RANK 3 REQ.</span></div>
+                    <button class="btn" id="b-missile" style="width:110px;" onclick="buy('missile')">400</button>
+                </div>
             </div>
-            
-            <div class="shop-row">
-                <div><b>MODULE CANON</b><span id="txt-cannon">STATUT : OFF</span></div>
-                <button id="btn-up-cannon" onclick="buyCannon()">150 C</button>
-            </div>
-
-            <button class="secondary" onclick="nav('screen-main')">FERMER L'INTERFACE</button>
+            <button class="btn" onclick="showScreen('scr-main')">RETURN</button>
         </div>
     </div>
 
-    <div id="screen-settings" class="screen">
+    <div id="scr-pause" class="screen">
         <div class="panel">
-            <h1>CONFIG</h1>
-            <div class="divider"></div>
-            <button id="btn-particles" onclick="toggleParticles()">PARTICULES : ACTIF</button>
-            <button onclick="resetData()" style="color: var(--danger); border-color: rgba(239, 68, 68, 0.2);">WIPE DATA</button>
-            <button class="secondary" onclick="nav('screen-main')">RETOUR</button>
+            <h1>PAUSE</h1>
+            <button class="btn" onclick="resumeGame()">RESUME</button>
+            <button class="btn" onclick="location.reload()">ABORT</button>
         </div>
     </div>
 
-    <div id="screen-gameover" class="screen">
+    <div id="scr-over" class="screen">
         <div class="panel">
-            <h1 style="color: var(--danger)">CRITICAL FAILURE</h1>
-            <div class="divider" style="background: var(--danger)"></div>
-            <h2 id="go-score">SCORE 0</h2>
-            <h2 id="go-credits" style="color: var(--accent)">+ 0 CREDITS</h2>
-            <button class="primary" onclick="startGame()">REBOOT</button>
-            <button onclick="nav('screen-main')">TERMINAL</button>
+            <h1 style="color: var(--danger);">TERMINATED</h1>
+            <p id="f-score">SCORE: 0</p>
+            <p id="f-credits" style="color: var(--neon);">+ 0 CR</p>
+            <button class="btn" onclick="startGame()">REBOOT</button>
+            <button class="btn" onclick="showScreen('scr-main')">MENU</button>
         </div>
     </div>
 
-    <canvas id="gameCanvas"></canvas>
+    <canvas id="game"></canvas>
 
 <script>
-const canvas = document.getElementById('gameCanvas');
+const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
-let saveData = JSON.parse(localStorage.getItem('orbitalDataV3_1')) || {
-    credits: 0, highScore: 0, shieldLevel: 1, cannonUnlocked: false, particlesOn: true
-};
+let data = JSON.parse(localStorage.getItem('titan_v6')) || { credits: 0, sLvl: 1, hasC: false, hasM: false, xp: 0, rank: 1 };
+const save = () => { localStorage.setItem('titan_v6', JSON.stringify(data)); uUI(); };
 
-function save() { localStorage.setItem('orbitalDataV3_1', JSON.stringify(saveData)); updateUI(); }
+let w, h, cx, cy, state = 'MENU', isPaused = false;
+let score = 0, currentCreds = 0, frame = 0, ultCharge = 0, shake = 0;
+let player = { a: 0, rad: 105, w: 0.6, s: 0.16 };
+let enemies = [], bullets = [], particles = [];
+let keys = { L: false, R: false };
 
-let width, height, centerX, centerY, state = 'MENU', score = 0, sessionCredits = 0, frameCount = 0;
-let shield = { angle: 0, width: 0.6, radius: 75, speed: 0.13 };
-let enemies = [], particles = [], bullets = [], inputs = { left: false, right: false };
+function uUI() {
+    document.getElementById('m-credits').innerText = data.credits + " CR";
+    document.getElementById('l-shield').innerText = "LVL " + data.sLvl;
+    document.getElementById('l-cannon').innerText = data.hasC ? "ACTIVE" : "LOCKED";
+    document.getElementById('l-missile').innerText = data.hasM ? "ACTIVE" : (data.rank < 3 ? "RANK 3 REQ." : "400 CR");
+    
+    document.getElementById('b-shield').disabled = data.credits < data.sLvl * 50 || data.sLvl >= 5;
+    document.getElementById('b-cannon').disabled = data.credits < 150 || data.hasC;
+    document.getElementById('b-missile').disabled = data.credits < 400 || data.hasM || data.rank < 3;
+    
+    document.getElementById('v-lvl').innerText = "RANK " + data.rank;
+    document.getElementById('xp-fill').style.width = (data.xp % 100) + "%";
+}
 
-function nav(id) {
+function showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
     document.getElementById(id).style.display = 'flex';
-    updateUI();
+    uUI();
 }
 
-function updateUI() {
-    document.getElementById('main-credits').innerText = `CREDITS ${saveData.credits}`;
-    document.getElementById('shop-credits').innerText = `CREDITS ${saveData.credits}`;
-    let sCost = saveData.shieldLevel * 50;
-    document.getElementById('lvl-shield').innerText = `NIVEAU ${saveData.shieldLevel}`;
-    let bS = document.getElementById('btn-up-shield');
-    if(saveData.shieldLevel >= 5) { bS.innerText = "MAX"; bS.disabled = true; }
-    else { bS.innerText = `${sCost} C`; bS.disabled = saveData.credits < sCost; }
-    let bC = document.getElementById('btn-up-cannon');
-    if(saveData.cannonUnlocked) { document.getElementById('txt-cannon').innerText = "STATUT : ONLINE"; bC.innerText = "ACTIF"; bC.disabled = true; }
-    else { bC.disabled = saveData.credits < 150; }
-    document.getElementById('btn-particles').innerText = `PARTICULES : ${saveData.particlesOn ? 'ACTIF' : 'INACTIF'}`;
+function buy(t) {
+    if(t === 'shield') { data.credits -= data.sLvl*50; data.sLvl++; }
+    if(t === 'cannon') { data.credits -= 150; data.hasC = true; }
+    if(t === 'missile') { data.credits -= 400; data.hasM = true; }
+    save();
 }
-
-function buyShield() {
-    let c = saveData.shieldLevel * 50;
-    if(saveData.credits >= c && saveData.shieldLevel < 5) { saveData.credits -= c; saveData.shieldLevel++; save(); }
-}
-function buyCannon() {
-    if(saveData.credits >= 150 && !saveData.cannonUnlocked) { saveData.credits -= 150; saveData.cannonUnlocked = true; save(); }
-}
-function toggleParticles() { saveData.particlesOn = !saveData.particlesOn; save(); }
-function resetData() { if(confirm("CONFIRMER SUPPRESSION ?")) { localStorage.removeItem('orbitalDataV3_1'); location.reload(); } }
 
 function resize() {
-    width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight;
-    centerX = width / 2; centerY = height / 2;
+    w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight;
+    cx = w/2; cy = h/2;
 }
-window.addEventListener('resize', resize);
-resize();
+window.onresize = resize; resize();
 
 canvas.addEventListener('touchstart', (e) => {
-    if(state !== 'PLAYING') return; e.preventDefault();
-    for(let i=0; i<e.touches.length; i++) {
-        if(e.touches[i].clientX < width / 2) inputs.left = true; else inputs.right = true;
-    }
+    if(state !== 'PLAY') return; e.preventDefault();
+    for(let t of e.touches) { if(t.clientX < w/2) keys.L = true; else keys.R = true; }
 }, {passive: false});
-canvas.addEventListener('touchend', (e) => {
-    inputs.left = false; inputs.right = false;
-});
-
-function spawnP(x, y, col) {
-    if (!saveData.particlesOn) return;
-    for (let i = 0; i < 10; i++) {
-        particles.push({
-            x, y, vx: (Math.random() - 0.5) * 5, vy: (Math.random() - 0.5) * 5,
-            life: 1.0, color: col, size: Math.random() * 2
-        });
-    }
-}
+canvas.addEventListener('touchend', () => { keys.L = false; keys.R = false; });
 
 function startGame() {
-    state = 'PLAYING'; score = 0; sessionCredits = 0; frameCount = 0;
-    enemies = []; particles = []; bullets = []; shield.angle = 0;
-    shield.width = 0.5 + (saveData.shieldLevel * 0.1); 
-    document.getElementById('hud-score').innerText = `SCORE 0`;
-    document.getElementById('hud-credits').innerText = `CREDITS 0`;
-    nav('screen-game');
+    state = 'PLAY'; isPaused = false; score = 0; currentCreds = 0; frame = 0; ultCharge = 0;
+    enemies = []; bullets = []; particles = [];
+    player.w = 0.45 + (data.sLvl * 0.1);
+    document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+    document.getElementById('hud').style.display = 'grid';
+    document.getElementById('ultimate-btn').style.display = 'flex';
+    uUI();
+}
+
+function pauseGame() { isPaused = true; showScreen('scr-pause'); }
+function resumeGame() { isPaused = false; document.getElementById('scr-pause').style.display = 'none'; }
+
+function triggerUlt() {
+    if(ultCharge < 100) return;
+    enemies = []; ultCharge = 0; shake = 30;
+    for(let i=0; i<50; i++) particles.push({x:cx, y:cy, vx:(Math.random()-0.5)*20, vy:(Math.random()-0.5)*20, l:1, c:data.hasM ? '#ff0055' : '#00f2ff'});
+}
+
+function spawnExplosion(x, y, color) {
+    for(let i=0; i<15; i++) {
+        particles.push({x: x, y: y, vx: (Math.random()-0.5)*10, vy: (Math.random()-0.5)*10, l: 1, c: color});
+    }
 }
 
 function update() {
-    if (state !== 'PLAYING') return;
-    frameCount++;
-    if (inputs.left) shield.angle -= shield.speed;
-    if (inputs.right) shield.angle += shield.speed;
-    shield.angle = (shield.angle + Math.PI * 2) % (Math.PI * 2);
+    if(state !== 'PLAY' || isPaused) return;
+    frame++;
+    if(keys.L) player.a -= player.s;
+    if(keys.R) player.a += player.s;
+    if(shake > 0) shake *= 0.9;
 
-    if (saveData.cannonUnlocked && frameCount % 35 === 0) {
-        bullets.push({
-            x: centerX + Math.cos(shield.angle) * shield.radius,
-            y: centerY + Math.sin(shield.angle) * shield.radius,
-            vx: Math.cos(shield.angle) * 10, vy: Math.sin(shield.angle) * 10
+    if(ultCharge < 100) ultCharge += 0.1;
+    let uBtn = document.getElementById('ultimate-btn');
+    uBtn.style.color = ultCharge >= 100 ? '#00f2ff' : '#444';
+    uBtn.style.borderColor = ultCharge >= 100 ? '#00f2ff' : '#222';
+
+    // Arme 1 : Railgun
+    if(data.hasC && frame % 25 === 0) {
+        bullets.push({ x: cx + Math.cos(player.a)*player.rad, y: cy + Math.sin(player.a)*player.rad, a: player.a, type: 'rail' });
+    }
+    // Arme 2 : Missile
+    if(data.hasM && frame % 80 === 0) {
+        bullets.push({ x: cx + Math.cos(player.a)*player.rad, y: cy + Math.sin(player.a)*player.rad, a: player.a, type: 'missile' });
+    }
+
+    bullets.forEach((b, bi) => {
+        let speed = b.type === 'rail' ? 12 : 6;
+        b.x += Math.cos(b.a)*speed; b.y += Math.sin(b.a)*speed;
+        if(b.x<0||b.x>w||b.y<0||b.y>h) bullets.splice(bi,1);
+    });
+
+    if(frame % Math.max(10, 50 - Math.floor(score/10)) === 0) {
+        let a = Math.random()*Math.PI*2;
+        enemies.push({ x: cx + Math.cos(a)*w, y: cy + Math.sin(a)*w, s: 3.5+(score*0.05) });
+    }
+
+    enemies.forEach((en, i) => {
+        let a = Math.atan2(cy - en.y, cx - en.x);
+        en.x += Math.cos(a)*en.s; en.y += Math.sin(a)*en.s;
+        let d = Math.hypot(cx - en.x, cy - en.y);
+
+        bullets.forEach((b, bi) => {
+            if(Math.hypot(b.x-en.x, b.y-en.y) < 25) {
+                if(b.type === 'missile') {
+                    spawnExplosion(en.x, en.y, '#ff0055');
+                    // Damage zone : élimine les ennemis proches
+                    enemies.forEach((en2, i2) => {
+                        if(Math.hypot(en2.x-en.x, en2.y-en.y) < 80) { enemies.splice(i2,1); score++; currentCreds++; data.xp += 5; }
+                    });
+                } else {
+                    spawnExplosion(en.x, en.y, '#00f2ff');
+                    enemies.splice(i,1); score++; currentCreds++; data.xp += 5;
+                }
+                bullets.splice(bi,1);
+                if(data.xp >= data.rank * 100) { data.rank++; }
+                document.getElementById('v-score').innerText = score;
+                uUI();
+            }
         });
-    }
 
-    for (let i = bullets.length - 1; i >= 0; i--) {
-        bullets[i].x += bullets[i].vx; bullets[i].y += bullets[i].vy;
-        if (bullets[i].x < 0 || bullets[i].x > width || bullets[i].y < 0 || bullets[i].y > height) bullets.splice(i, 1);
-    }
+        if(!enemies[i]) return;
 
-    if (frameCount % Math.max(20, 70 - Math.floor(score/4)) === 0) {
-        const a = Math.random() * Math.PI * 2;
-        enemies.push({
-            x: centerX + Math.cos(a) * Math.max(width, height),
-            y: centerY + Math.sin(a) * Math.max(width, height),
-            speed: 3 + (score * 0.04)
-        });
-    }
-
-    for (let i = enemies.length - 1; i >= 0; i--) {
-        let en = enemies[i];
-        const aC = Math.atan2(centerY - en.y, centerX - en.x);
-        en.x += Math.cos(aC) * en.speed; en.y += Math.sin(aC) * en.speed;
-        const dist = Math.hypot(centerX - en.x, centerY - en.y);
-
-        for (let j = bullets.length - 1; j >= 0; j--) {
-            if (Math.hypot(bullets[j].x - en.x, bullets[j].y - en.y) < 15) {
-                spawnP(en.x, en.y, varProp('--accent'));
-                bullets.splice(j, 1); enemies.splice(i, 1);
-                score++; sessionCredits++; break;
+        if(d < player.rad + 10 && d > player.rad - 15) {
+            let aE = (Math.atan2(en.y - cy, en.x - cx) + Math.PI*2) % (Math.PI*2);
+            let pA = (player.a + Math.PI*2) % (Math.PI*2);
+            let diff = Math.abs(aE - pA);
+            if(diff > Math.PI) diff = Math.PI*2 - diff;
+            if(diff < player.w) {
+                spawnExplosion(en.x, en.y, '#fff');
+                enemies.splice(i,1); score++; currentCreds++; data.xp += 2;
+                document.getElementById('v-score').innerText = score;
+                uUI();
             }
         }
-        if (!enemies[i]) continue;
 
-        if (dist < shield.radius + 8 && dist > shield.radius - 10) {
-            let aE = (Math.atan2(en.y - centerY, en.x - centerX) + Math.PI * 2) % (Math.PI * 2);
-            let diff = Math.abs(aE - shield.angle);
-            if (diff > Math.PI) diff = Math.PI * 2 - diff;
-            if (diff < shield.width) {
-                spawnP(en.x, en.y, '#fff');
-                enemies.splice(i, 1); score++; sessionCredits++;
-                document.getElementById('hud-score').innerText = `SCORE ${score}`;
-                document.getElementById('hud-credits').innerText = `CREDITS ${sessionCredits}`;
-                continue;
-            }
+        if(d < 45) {
+            state = 'OVER'; data.credits += currentCreds; save();
+            document.getElementById('f-score').innerText = "SCORE: " + score;
+            document.getElementById('f-credits').innerText = "+ " + currentCreds + " CR";
+            document.getElementById('hud').style.display = 'none';
+            document.getElementById('ultimate-btn').style.display = 'none';
+            showScreen('scr-over');
         }
-        if (dist < 20) {
-            state = 'GAMEOVER'; saveData.credits += sessionCredits;
-            if(score > saveData.highScore) saveData.highScore = score;
-            save();
-            document.getElementById('go-score').innerText = `SCORE ${score}`;
-            document.getElementById('go-credits').innerText = `+ ${sessionCredits} CREDITS`;
-            nav('screen-gameover');
-        }
-    }
-    for (let i = particles.length - 1; i >= 0; i--) {
-        particles[i].x += particles[i].vx; particles[i].y += particles[i].vy;
-        particles[i].life -= 0.04; if (particles[i].life <= 0) particles.splice(i, 1);
-    }
+    });
+
+    particles.forEach((p, i) => {
+        p.x += p.vx; p.y += p.vy; p.l -= 0.04;
+        if(p.l <= 0) particles.splice(i,1);
+    });
 }
 
-function varProp(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
-
 function draw() {
-    ctx.fillStyle = varProp('--bg');
-    ctx.fillRect(0, 0, width, height);
+    ctx.fillStyle = '#050505'; ctx.fillRect(0,0,w,h);
+    ctx.save();
+    if(shake > 1) ctx.translate(Math.random()*shake, Math.random()*shake);
 
-    if(state === 'PLAYING') {
-        ctx.beginPath(); ctx.arc(centerX, centerY, 22, 0, Math.PI * 2);
-        ctx.fillStyle = varProp('--accent'); ctx.fill();
+    // Planète (Design 5.1 Restored)
+    let g = ctx.createRadialGradient(cx, cy, 0, cx, cy, 45);
+    g.addColorStop(0, '#fff'); g.addColorStop(0.3, '#00f2ff'); g.addColorStop(1, 'transparent');
+    ctx.beginPath(); ctx.arc(cx, cy, 45, 0, Math.PI*2); ctx.fillStyle = g; ctx.fill();
+    
+    // Hex Shield aura
+    ctx.strokeStyle = 'rgba(0, 242, 255, 0.2)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(cx, cy, 55, 0, Math.PI*2); ctx.stroke();
+
+    if(state === 'PLAY') {
         ctx.beginPath();
-        ctx.arc(centerX, centerY, shield.radius, shield.angle - shield.width, shield.angle + shield.width);
-        ctx.lineWidth = 4; ctx.strokeStyle = '#fff'; ctx.stroke();
+        ctx.arc(cx, cy, player.rad, player.a - player.w, player.a + player.w);
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 8; ctx.lineCap = 'butt';
+        ctx.stroke();
     }
 
-    ctx.fillStyle = '#fff';
-    bullets.forEach(b => { ctx.beginPath(); ctx.arc(b.x, b.y, 3, 0, Math.PI * 2); ctx.fill(); });
-
-    ctx.fillStyle = varProp('--danger');
-    enemies.forEach(en => { ctx.beginPath(); ctx.arc(en.x, en.y, 6, 0, Math.PI * 2); ctx.fill(); });
-
-    particles.forEach(p => {
-        ctx.globalAlpha = p.life; ctx.fillStyle = p.color;
-        ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+    bullets.forEach(b => {
+        ctx.fillStyle = b.type === 'missile' ? '#ff0055' : '#00f2ff';
+        ctx.beginPath(); ctx.arc(b.x, b.y, b.type === 'missile' ? 6 : 4, 0, Math.PI*2); ctx.fill();
+        if(b.type === 'missile') { // Traînée de fumée
+            particles.push({x:b.x, y:b.y, vx:0, vy:0, l:0.5, c:'rgba(255,0,85,0.3)'});
+        }
     });
-    ctx.globalAlpha = 1.0;
+
+    ctx.fillStyle = '#ff0055';
+    enemies.forEach(en => { ctx.beginPath(); ctx.arc(en.x, en.y, 8, 0, Math.PI*2); ctx.fill(); });
+
+    particles.forEach(p => { ctx.globalAlpha = p.l; ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI*2); ctx.fill(); });
+    ctx.globalAlpha = 1;
+
+    ctx.restore();
     update();
     requestAnimationFrame(draw);
 }
-nav('screen-main');
-draw();
+uUI(); draw();
 </script>
 </body>
-  </html>
-  
+                                                                       </html>
+                        

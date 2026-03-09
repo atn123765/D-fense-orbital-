@@ -3,163 +3,177 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TITAN ONLINE | V18</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
-    
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
+    <title>TITAN V19 | FORCE</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&display=swap" rel="stylesheet">
     <style>
         :root { --neon: #00f2ff; --danger: #ff0055; --bg: #020205; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
         body { margin: 0; background: var(--bg); color: #fff; font-family: 'Orbitron', sans-serif; overflow: hidden; }
-        canvas { display: block; position: fixed; inset: 0; z-index: 1; touch-action: none; }
-
-        .screen { position: fixed; inset: 0; z-index: 2000; display: none; flex-direction: column; justify-content: center; align-items: center; background: rgba(0,0,0,0.9); backdrop-filter: blur(10px); }
-        .panel { background: #0a1120; border: 2px solid var(--neon); padding: 25px; width: 90%; max-width: 380px; text-align: center; box-shadow: 0 0 20px rgba(0,242,255,0.2); }
-
-        h1 { font-size: 30px; margin-bottom: 10px; text-shadow: 0 0 10px var(--neon); }
-        input { width: 100%; background: #111; border: 1px solid var(--neon); padding: 12px; color: #fff; margin-bottom: 10px; font-family: 'Orbitron'; font-size: 16px; }
         
-        .btn { background: transparent; border: 1px solid var(--neon); color: var(--neon); padding: 15px; font-family: 'Orbitron'; cursor: pointer; width: 100%; margin: 5px 0; font-weight: bold; }
-        .btn:active { background: var(--neon); color: #000; }
+        /* INTERFACES */
+        .screen { position: fixed; inset: 0; z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; background: var(--bg); }
+        .panel { border: 2px solid var(--neon); padding: 30px; width: 90%; max-width: 400px; text-align: center; background: #0a0a10; }
         
-        #msg { font-size: 10px; color: var(--neon); margin-bottom: 15px; min-height: 20px; }
-        #hud { position: fixed; top: 10px; width: 100%; display: none; justify-content: space-around; z-index: 1000; pointer-events: none; }
+        h1 { font-size: 35px; color: var(--neon); text-shadow: 0 0 15px var(--neon); margin-top: 0; }
+        input { width: 100%; padding: 15px; margin: 10px 0; background: #111; border: 1px solid var(--neon); color: #fff; font-family: 'Orbitron'; font-size: 18px; }
+        
+        .btn { width: 100%; padding: 18px; margin: 10px 0; border: none; background: var(--neon); color: #000; font-family: 'Orbitron'; font-weight: 900; font-size: 16px; cursor: pointer; }
+        .btn:active { background: #fff; transform: scale(0.98); }
+        
+        #hud { position: fixed; top: 0; width: 100%; padding: 15px; display: none; justify-content: space-between; z-index: 50; font-weight: 900; font-size: 18px; color: var(--neon); pointer-events: none; }
+        canvas { display: block; position: fixed; inset: 0; z-index: 10; background: #000; }
+        #error-msg { color: var(--danger); font-size: 12px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
     <div id="hud">
-        <span>SCORE: <b id="v-score">0</b></span>
-        <span>BEST: <b id="v-best">0</b></span>
+        <div>SCORE: <span id="v-score">0</span></div>
+        <div style="color:#fff">TITAN MK-1</div>
     </div>
 
-    <div id="scr-auth" class="screen" style="display: flex;">
+    <div id="scr-auth" class="screen">
         <div class="panel">
             <h1>TITAN</h1>
-            <div id="msg">SYSTÈME PRÊT</div>
-            <input type="email" id="email" placeholder="Email">
-            <input type="password" id="pass" placeholder="Password">
-            <button class="btn" onclick="authAction('login')">CONNEXION</button>
-            <button class="btn" onclick="authAction('signup')">CRÉER COMPTE</button>
-            <hr style="border: 0; border-top: 1px solid rgba(0,242,255,0.2); margin: 15px 0;">
-            <button class="btn" style="border-color: #fff; color: #fff;" onclick="startOffline()">JOUER SANS COMPTE</button>
+            <p style="font-size:10px; margin-bottom:20px;">SYSTÈME LOCAL ACTIF (SANS FIREBASE)</p>
+            <div id="error-msg"></div>
+            <input type="password" id="pass" placeholder="MOT DE PASSE">
+            <button class="btn" onclick="checkLogin()">ENTRER DANS LE COCKPIT</button>
+            <p style="font-size:9px; color:gray;">(Indice: le mot de passe est "titan")</p>
         </div>
     </div>
 
-    <div id="scr-main" class="screen">
+    <div id="scr-menu" class="screen" style="display:none;">
         <div class="panel">
-            <h2 id="user-display">PILOTE</h2>
-            <button class="btn" onclick="startGame()" style="background: var(--neon); color:#000;">LANCER MISSION</button>
-            <button class="btn" onclick="alert('Arsenal MK-1 : Bouclier Actif')">ARSENAL</button>
-            <button class="btn" onclick="location.reload()">DÉCONNEXION</button>
+            <h2 style="color:var(--neon)">PILOTE PRÊT</h2>
+            <button class="btn" onclick="launchGame()">DÉPLOYER UNITÉ</button>
+            <button class="btn" style="background:none; border:1px solid var(--neon); color:var(--neon)" onclick="alert('Arsenal: Bouclier MK-1 chargé.')">ARSENAL</button>
         </div>
     </div>
 
     <canvas id="game"></canvas>
 
 <script>
-// CONFIG & INITIALISATION
-const msg = document.getElementById('msg');
-let isFirebaseOk = false;
-let highscore = localStorage.getItem('titan_best') || 0;
-document.getElementById('v-best').innerText = highscore;
+    // --- VARIABLES ---
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    let state = 'LOGIN';
+    let score = 0;
+    let isTouching = false;
+    let player = { a: 0, rad: 110, w: 0.8, speed: 0.04, boost: 0.14 };
+    let enemies = [];
 
-try {
-    const config = {
-        apiKey: "AIzaSyCSCBazFl8Ent9fin0Xw1rWaMgP9yyKNgA",
-        authDomain: "titan-online-e9286.firebaseapp.com",
-        projectId: "titan-online-e9286",
-        databaseURL: "https://titan-online-e9286-default-rtdb.firebaseio.com",
-        appId: "1:486050054558:web:7364e0f450d151b96d568f"
-    };
-    firebase.initializeApp(config);
-    isFirebaseOk = true;
-    msg.innerText = "SERVEURS CONNECTÉS";
-} catch(e) {
-    msg.innerText = "MODE HORS-LIGNE (Serveur bloqué)";
-    msg.style.color = "orange";
-}
-
-// FONCTIONS AUTH
-function authAction(type) {
-    if(!isFirebaseOk) {
-        alert("Le serveur est bloqué par ta tablette. Utilise le bouton 'Jouer sans compte'.");
-        return;
+    // --- CONNEXION LOCALE ---
+    function checkLogin() {
+        const p = document.getElementById('pass').value.toLowerCase();
+        if(p === "titan" || p === "1234") {
+            document.getElementById('scr-auth').style.display = 'none';
+            document.getElementById('scr-menu').style.display = 'flex';
+            state = 'MENU';
+        } else {
+            document.getElementById('error-msg').innerText = "ACCÈS REFUSÉ : MOT DE PASSE INCORRECT";
+        }
     }
-    const e = document.getElementById('email').value;
-    const p = document.getElementById('pass').value;
-    
-    if(type === 'login') {
-        firebase.auth().signInWithEmailAndPassword(e, p)
-            .catch(err => msg.innerText = "ERREUR: " + err.message);
-    } else {
-        firebase.auth().createUserWithEmailAndPassword(e, p)
-            .catch(err => msg.innerText = "ERREUR: " + err.message);
+
+    // --- LOGIQUE JEU ---
+    function launchGame() {
+        document.getElementById('scr-menu').style.display = 'none';
+        document.getElementById('hud').style.display = 'flex';
+        state = 'PLAY';
+        score = 0;
+        enemies = [];
+        spawnEnemy();
     }
-}
 
-firebase.auth().onAuthStateChanged(user => {
-    if(user) {
-        document.getElementById('user-display').innerText = user.email.split('@')[0].toUpperCase();
-        showScreen('scr-main');
+    function spawnEnemy() {
+        if(state !== 'PLAY') return;
+        let ang = Math.random() * Math.PI * 2;
+        enemies.push({
+            x: window.innerWidth/2 + Math.cos(ang) * window.innerWidth,
+            y: window.innerHeight/2 + Math.sin(ang) * window.innerWidth,
+            s: 2.5 + (score/100)
+        });
+        setTimeout(spawnEnemy, Math.max(500, 1500 - score*2));
     }
-});
 
-function startOffline() {
-    document.getElementById('user-display').innerText = "GUEST_UNIT";
-    showScreen('scr-main');
-}
-
-// LOGIQUE JEU SIMPLE
-let state = 'MENU', score = 0, isTouching = false;
-let player = { a: 0, rad: 100, w: 0.6 };
-let enemies = [];
-const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
-
-function showScreen(id) {
-    document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
-    document.getElementById(id).style.display = 'flex';
-}
-
-function startGame() {
-    state = 'PLAY'; score = 0; enemies = [];
-    document.getElementById('hud').style.display = 'flex';
-    document.getElementById('scr-main').style.display = 'none';
-    spawn();
-}
-
-function spawn() {
-    if(state !== 'PLAY') return;
-    enemies.push({ x: Math.random()*window.innerWidth, y: -20, s: 3 + score/100 });
-    setTimeout(spawn, 1000);
-}
-
-function draw() {
-    ctx.fillStyle = '#020205'; ctx.fillRect(0,0,canvas.width,canvas.height);
-    if(state === 'PLAY') {
-        player.a += isTouching ? 0.12 : 0.04;
-        ctx.strokeStyle = var(--neon); ctx.lineWidth = 10;
-        ctx.beginPath(); ctx.arc(window.innerWidth/2, window.innerHeight/2, player.rad, player.a, player.a + player.w); ctx.stroke();
+    function update() {
+        if(state !== 'PLAY') return;
         
-        // Dessin ennemis simplifié pour tester
-        enemies.forEach((en, i) => {
-            en.y += en.s;
-            ctx.fillStyle = 'red'; ctx.fillRect(en.x, en.y, 10, 10);
-            if(en.y > window.innerHeight) enemies.splice(i, 1);
+        player.a += isTouching ? player.boost : player.speed;
+
+        enemies.forEach((e, i) => {
+            let dx = window.innerWidth/2 - e.x;
+            let dy = window.innerHeight/2 - e.y;
+            let d = Math.sqrt(dx*dx + dy*dy);
+            
+            e.x += (dx/d) * e.s;
+            e.y += (dy/d) * e.s;
+
+            // Collision bouclier
+            if(d < player.rad + 15 && d > player.rad - 15) {
+                let pA = (Math.atan2(dy, dx) + Math.PI) % (Math.PI*2);
+                let diff = Math.abs(pA - (player.a % (Math.PI*2)));
+                if(diff < player.w || diff > (Math.PI*2 - player.w)) {
+                    enemies.splice(i, 1);
+                    score += 10;
+                    document.getElementById('v-score').innerText = score;
+                }
+            }
+
+            // Game Over
+            if(d < 40) {
+                state = 'MENU';
+                document.getElementById('hud').style.display = 'none';
+                document.getElementById('scr-menu').style.display = 'flex';
+                alert("TITAN DÉTRUIT ! Score final : " + score);
+            }
         });
     }
-    requestAnimationFrame(draw);
-}
 
-window.addEventListener('touchstart', () => isTouching = true);
-window.addEventListener('touchend', () => isTouching = false);
-window.onresize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
-window.onresize();
-draw();
+    function draw() {
+        ctx.fillStyle = '#020205';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        if(state === 'PLAY') {
+            // Centre
+            ctx.beginPath();
+            ctx.arc(window.innerWidth/2, window.innerHeight/2, 35, 0, Math.PI*2);
+            ctx.fillStyle = '#fff';
+            ctx.fill();
+
+            // Bouclier
+            ctx.beginPath();
+            ctx.arc(window.innerWidth/2, window.innerHeight/2, player.rad, player.a - player.w, player.a + player.w);
+            ctx.strokeStyle = isTouching ? '#fff' : var(--neon);
+            ctx.lineWidth = 15;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+
+            // Ennemis
+            enemies.forEach(e => {
+                ctx.fillStyle = var(--danger);
+                ctx.beginPath();
+                ctx.arc(e.x, e.y, 8, 0, Math.PI*2);
+                ctx.fill();
+            });
+            update();
+        }
+        requestAnimationFrame(draw);
+    }
+
+    // --- CONTROLES ---
+    window.addEventListener('touchstart', (e) => { 
+        if(state === 'PLAY') isTouching = true;
+    });
+    window.addEventListener('touchend', () => isTouching = false);
+    
+    window.onresize = () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    };
+    window.onresize();
+    draw();
+
 </script>
 </body>
     </html>

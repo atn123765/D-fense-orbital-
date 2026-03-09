@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ORBITAL TITAN | ONLINE</title>
+    <title>TITAN | LIGUE & CLASSEMENT</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&display=swap" rel="stylesheet">
     
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -15,18 +15,23 @@
         body { margin: 0; background: var(--bg); color: #fff; font-family: 'Orbitron', sans-serif; overflow: hidden; touch-action: none; }
         canvas { display: block; position: fixed; inset: 0; z-index: 1; }
         
-        .screen { position: fixed; inset: 0; z-index: 2000; display: none; flex-direction: column; justify-content: center; align-items: center; background: rgba(0,0,0,0.9); backdrop-filter: blur(10px); }
-        .panel { background: rgba(10, 15, 25, 0.95); padding: 30px; border: 2px solid var(--neon); width: 85%; max-width: 400px; text-align: center; clip-path: polygon(10% 0, 100% 0, 100% 90%, 90% 100%, 0 100%, 0 10%); }
+        /* --- ECRANS --- */
+        .screen { position: fixed; inset: 0; z-index: 2000; display: none; flex-direction: column; justify-content: center; align-items: center; background: rgba(0,0,0,0.92); backdrop-filter: blur(15px); }
+        .panel { background: rgba(10, 15, 25, 0.98); padding: 30px; border: 2px solid var(--neon); width: 85%; max-width: 400px; text-align: center; clip-path: polygon(10% 0, 100% 0, 100% 90%, 90% 100%, 0 100%, 0 10%); box-shadow: 0 0 30px rgba(0, 242, 255, 0.2); }
         
-        .btn { background: transparent; border: 1px solid var(--neon); color: var(--neon); padding: 12px; font-family: 'Orbitron'; font-weight: 900; cursor: pointer; margin: 8px 0; width: 100%; text-transform: uppercase; transition: 0.2s; }
-        .btn:active { background: var(--neon); color: #000; }
-        .btn-google { background: #fff; color: #000; border: none; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        /* --- BOUTONS --- */
+        .btn { background: transparent; border: 1px solid var(--neon); color: var(--neon); padding: 14px; font-family: 'Orbitron'; font-weight: 900; cursor: pointer; margin: 8px 0; width: 100%; text-transform: uppercase; transition: 0.3s; }
+        .btn:hover { background: rgba(0, 242, 255, 0.1); }
+        .btn-google { background: #fff; color: #000; border: none; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 14px; }
 
-        #leaderboard { margin-top: 20px; font-size: 11px; text-align: left; background: rgba(255,255,255,0.05); padding: 10px; border: 1px solid rgba(0,242,255,0.2); }
-        .player-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        /* --- LEADERBOARD --- */
+        #leaderboard { margin-top: 20px; font-size: 11px; text-align: left; background: rgba(0,0,0,0.4); padding: 15px; border: 1px solid rgba(0,242,255,0.2); border-radius: 8px; }
+        .player-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .rank-num { color: var(--neon); font-weight: 900; margin-right: 8px; }
         
+        /* --- HUD --- */
         #hud { position: fixed; top: 0; left: 0; width: 100%; padding: 15px; display: none; grid-template-columns: 1fr 1fr 1fr; z-index: 1000; pointer-events: none; box-sizing: border-box; }
-        .league-tag { font-size: 10px; font-weight: 900; padding: 2px 6px; border-radius: 3px; margin-left: 5px; vertical-align: middle; }
+        .league-tag { font-size: 10px; font-weight: 900; padding: 2px 8px; border-radius: 4px; color: #000; margin-top: 5px; display: inline-block; }
     </style>
 </head>
 <body>
@@ -39,32 +44,35 @@
 
     <div id="scr-login" class="screen" style="display: flex;">
         <div class="panel">
-            <h1 style="color: var(--neon); font-size: 42px; margin:0">TITAN</h1>
-            <p style="font-size: 10px; letter-spacing: 3px; margin-bottom:25px;">ONLINE PROTOCOL</p>
+            <h1 style="color: var(--neon); font-size: 45px; margin:0">TITAN</h1>
+            <p style="font-size: 10px; letter-spacing: 4px; margin-bottom:30px; opacity: 0.8;">ONLINE NETWORK</p>
             <button class="btn btn-google" onclick="loginWithGoogle()">
-                <img src="https://www.google.com/favicon.ico" width="18"> LOGIN WITH GOOGLE
+                <img src="https://www.google.com/favicon.ico" width="20"> SE CONNECTER AVEC GOOGLE
             </button>
-            <p style="font-size: 9px; opacity: 0.6; margin-top:15px;">Connecte-toi pour sauvegarder ton arsenal et grimper dans le classement mondial.</p>
+            <p style="font-size: 9px; opacity: 0.5; margin-top:20px;">Accédez au classement et sauvez votre progression.</p>
         </div>
     </div>
 
     <div id="scr-main" class="screen">
         <div class="panel">
-            <div id="user-info" style="margin-bottom: 20px;"></div>
-            <button class="btn" onclick="startGame()">DEPLOIEMENT UNITÉ</button>
-            <button class="btn" onclick="showScreen('scr-shop')">ARSENAL / LIGUE</button>
+            <div id="user-info" style="margin-bottom: 20px;">
+                </div>
+            <button class="btn" onclick="startGame()" style="background: var(--neon); color: #000;">DÉPLOYER UNITÉ</button>
+            <button class="btn" onclick="showScreen('scr-shop')">ARSENAL</button>
             
             <div id="leaderboard">
-                <div style="text-align:center; font-weight:900; color:var(--gold); margin-bottom:8px;">TOP 5 MONDIAL</div>
-                <div id="leaderboard-list">Récupération des données...</div>
+                <div style="text-align:center; font-weight:900; color:var(--gold); margin-bottom:10px; font-size:12px;">TOP 5 MONDIAL</div>
+                <div id="leaderboard-list">Synchronisation...</div>
             </div>
+            
+            <button class="btn" style="border:none; font-size:9px; margin-top:10px; opacity:0.5;" onclick="auth.signOut()">DÉCONNEXION</button>
         </div>
     </div>
 
     <canvas id="game"></canvas>
 
 <script>
-// --- CONFIGURATION FIREBASE (TES CLES) ---
+// --- TA CONFIGURATION FIREBASE ---
 const firebaseConfig = {
     apiKey: "AIzaSyCSCBazFl8Ent9fin0Xw1rWaMgP9yyKNgA",
     authDomain: "titan-online-e9286.firebaseapp.com",
@@ -79,14 +87,13 @@ const db = firebase.database();
 const auth = firebase.auth();
 
 // --- VARIABLES ---
-let data = { name: "Pilote", photo: "", highscore: 0, credits: 0, rank: 1 };
-let state = 'MENU', score = 0, player = { a: 0, rad: 105, w: 0.6, s: 0.16 };
-let enemies = [], bullets = [];
+let data = { name: "Pilote", photo: "", highscore: 0, credits: 0 };
+let state = 'MENU', score = 0, player = { a: 0, rad: 105, w: 0.6 };
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 let w, h, cx, cy;
 
-// --- LOGIQUE LIGUES ---
+// --- LIGUES ---
 function getLeague(s) {
     if(s >= 5000) return { n: "MAÎTRE", c: "#ff0055" };
     if(s >= 2000) return { n: "DIAMANT", c: "#00f2ff" };
@@ -95,45 +102,39 @@ function getLeague(s) {
     return { n: "BRONZE", c: "#cd7f32" };
 }
 
-// --- CONNEXION ---
+// --- CONNEXION & AUTH ---
 function loginWithGoogle() {
     const provider = new firebase.auth.GoogleAuthProvider();
     auth.signInWithPopup(provider).then(res => {
-        data.name = res.user.displayName;
-        data.photo = res.user.photoURL;
-        loadOnlineData(res.user.uid);
-    }).catch(e => {
-        alert("Erreur de connexion : Vérifie les 'Authorized Domains' sur Firebase !");
-        console.error(e);
-    });
+        // La redirection vers le menu se fera via onAuthStateChanged
+    }).catch(e => alert("Erreur : " + e.message));
 }
 
-function loadOnlineData(uid) {
+// Détecte automatiquement si l'utilisateur est connecté
+auth.onAuthStateChanged(user => {
+    if (user) {
+        data.name = user.displayName;
+        data.photo = user.photoURL;
+        loadUserCloudData(user.uid);
+    } else {
+        showScreen('scr-login');
+    }
+});
+
+function loadUserCloudData(uid) {
     db.ref('players/' + uid).on('value', snap => {
         if(snap.exists()) data = {...data, ...snap.val()};
-        showScreen('scr-main');
         updateMenuUI();
+        showScreen('scr-main');
     });
-}
-
-function saveOnlineData() {
-    const user = auth.currentUser;
-    if(user) {
-        db.ref('players/' + user.uid).update(data);
-        db.ref('leaderboard/' + user.uid).set({ 
-            name: data.name, 
-            score: data.highscore, 
-            photo: data.photo 
-        });
-    }
 }
 
 function updateMenuUI() {
     const league = getLeague(data.highscore);
     document.getElementById('user-info').innerHTML = `
-        <img src="${data.photo}" width="45" style="border-radius:50%; border:2px solid ${league.c}"><br>
-        <span style="font-weight:900">${data.name}</span><br>
-        <span class="league-tag" style="background:${league.c}; color:#000">${league.n}</span>
+        <img src="${data.photo}" width="50" style="border-radius:50%; border:3px solid ${league.c}; margin-bottom:10px;"><br>
+        <span style="font-weight:900; font-size:16px;">${data.name}</span><br>
+        <span class="league-tag" style="background:${league.c}">${league.n}</span>
     `;
     updateLeaderboard();
 }
@@ -148,14 +149,14 @@ function updateLeaderboard() {
             const l = getLeague(p.score);
             list.innerHTML += `
                 <div class="player-row">
-                    <span>#${i+1} ${p.name.split(' ')[0]}</span>
+                    <span><span class="rank-num">#${i+1}</span> ${p.name.split(' ')[0]}</span>
                     <span style="color:${l.c}; font-weight:900;">${p.score}</span>
                 </div>`;
         });
     });
 }
 
-// --- MOTEUR DE JEU ---
+// --- LOGIQUE JEU ---
 function resize() { w=canvas.width=window.innerWidth; h=canvas.height=window.innerHeight; cx=w/2; cy=h/2; }
 window.onresize = resize; resize();
 
@@ -165,7 +166,7 @@ function showScreen(id) {
 }
 
 function startGame() {
-    state = 'PLAY'; score = 0; enemies = []; bullets = [];
+    state = 'PLAY'; score = 0;
     document.getElementById('hud').style.display = 'grid';
     document.getElementById('v-score').innerText = "0";
     const league = getLeague(data.highscore);
@@ -176,30 +177,23 @@ function startGame() {
 
 function pauseGame() { state = 'PAUSE'; showScreen('scr-main'); }
 
-// --- BOUCLE DE DESSIN ---
 function draw() {
     ctx.fillStyle = '#050505'; ctx.fillRect(0,0,w,h);
     
-    // Planète (Design 5.1 Restored)
+    // Planète Design 5.1
     let g = ctx.createRadialGradient(cx, cy, 0, cx, cy, 45);
     g.addColorStop(0, '#fff'); g.addColorStop(0.3, '#00f2ff'); g.addColorStop(1, 'transparent');
     ctx.beginPath(); ctx.arc(cx, cy, 45, 0, Math.PI*2); ctx.fillStyle = g; ctx.fill();
 
     if(state === 'PLAY') {
-        // Shield
         ctx.beginPath();
         ctx.arc(cx, cy, player.rad, player.a - player.w, player.a + player.w);
-        ctx.strokeStyle = '#fff'; ctx.lineWidth = 8; ctx.lineCap = 'butt';
-        ctx.stroke();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 8; ctx.stroke();
     }
-    
     requestAnimationFrame(draw);
 }
-
 draw();
 </script>
 </body>
     </html>
     
-
-                        

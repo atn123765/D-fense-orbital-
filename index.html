@@ -1,126 +1,200 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TITAN V20</title>
+    <title>TITAN V21 | FINAL</title>
     <style>
-        body { margin: 0; background: #000; color: #0ff; font-family: sans-serif; text-align: center; overflow: hidden; }
+        :root { --n: #00f2ff; --d: #ff0055; --bg: #050508; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; background: var(--bg); color: #fff; font-family: 'Segoe UI', Roboto, sans-serif; overflow: hidden; touch-action: none; }
         
-        /* Conteneur de login */
-        #login-screen {
-            position: absolute; inset: 0; background: #050505;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            z-index: 9999; /* Toujours au dessus */
-        }
+        /* ECRANS */
+        .scr { position: fixed; inset: 0; z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; background: radial-gradient(circle, #101520 0%, #050508 100%); padding: 20px; }
+        .pnl { border: 2px solid var(--n); padding: 30px; width: 100%; max-width: 360px; text-align: center; box-shadow: 0 0 30px rgba(0,242,255,0.1); border-radius: 5px; background: rgba(0,0,0,0.8); }
+        
+        /* TYPO & INPUTS */
+        h1 { font-size: 45px; margin: 0 0 20px; letter-spacing: 5px; color: var(--n); text-shadow: 0 0 15px var(--n); font-weight: 900; }
+        input { width: 100%; padding: 18px; margin-bottom: 15px; background: #111; border: 1px solid #333; color: #fff; font-size: 18px; border-radius: 4px; }
+        input:focus { border-color: var(--n); outline: none; }
+        
+        /* BOUTONS (FIX TACTILE) */
+        .btn { width: 100%; padding: 20px; margin: 10px 0; border: none; background: var(--n); color: #000; font-weight: 900; font-size: 16px; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; border-radius: 4px; }
+        .btn:active { background: #fff; transform: translateY(2px); }
+        .btn-alt { background: none; border: 1px solid var(--n); color: var(--n); }
 
-        input {
-            padding: 20px; width: 80%; max-width: 300px; margin: 10px;
-            background: #111; border: 2px solid #0ff; color: #fff; font-size: 20px;
-        }
-
-        .btn-gros {
-            padding: 25px; width: 85%; max-width: 320px; margin: 15px;
-            background: #0ff; color: #000; font-weight: bold; font-size: 22px;
-            border: none; cursor: pointer; border-radius: 10px;
-            display: block; /* Force l'affichage */
-        }
-
-        #game-ui {
-            position: absolute; top: 10px; width: 100%; 
-            display: none; justify-content: space-around; font-size: 25px; z-index: 500;
-        }
-
-        canvas { display: block; background: #000; }
+        /* HUD */
+        #hud { position: fixed; top: 0; width: 100%; padding: 20px; display: none; justify-content: space-between; z-index: 50; font-weight: bold; font-size: 20px; pointer-events: none; }
+        #hud span { color: var(--n); text-shadow: 0 0 10px var(--n); }
+        
+        canvas { display: block; position: fixed; inset: 0; z-index: 10; }
+        #err { color: var(--d); font-size: 13px; margin-bottom: 15px; min-height: 18px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div id="login-screen">
-        <h1 style="font-size: 50px; margin-bottom: 5px;">TITAN</h1>
-        <p id="info" style="color: yellow;">ENTREZ LE CODE : 1234</p>
-        
-        <input type="text" id="pass-input" placeholder="CODE ICI">
-        
-        <button class="btn-gros" onmousedown="valider()" ontouchstart="valider()">
-            CONNEXION
-        </button>
+    <div id="hud">
+        <div>SCORE: <span id="v-score">0</span></div>
+        <div>BEST: <span id="v-best">0</span></div>
     </div>
 
-    <div id="game-ui">
-        <span>SCORE: <b id="score-txt">0</b></span>
+    <div id="scr-auth" class="scr">
+        <div class="pnl">
+            <h1>TITAN</h1>
+            <div id="err">ENTREZ VOTRE CODE D'ACCÈS</div>
+            <input type="text" id="pass" placeholder="CODE (ex: 1234)" autocomplete="off">
+            <button class="btn" onclick="app.login()">INITIALISER LE SYSTÈME</button>
+        </div>
     </div>
 
-    <canvas id="c"></canvas>
+    <div id="scr-menu" class="scr" style="display:none;">
+        <div class="pnl">
+            <h2 style="margin-top:0">UNITÉ PRÊTE</h2>
+            <button class="btn" onclick="app.start()">DÉPLOYER UNITÉ</button>
+            <button class="btn btn-alt" onclick="app.arsenal()">ARSENAL MK-1</button>
+            <button class="btn btn-alt" style="margin-top:20px; border-color:#555; color:#555; font-size:10px;" onclick="location.reload()">DÉCONNEXION</button>
+        </div>
+    </div>
+
+    <canvas id="canvas"></canvas>
 
 <script>
-    const login = document.getElementById('login-screen');
-    const info = document.getElementById('info');
-    const input = document.getElementById('pass-input');
-    const canvas = document.getElementById('c');
-    const ctx = canvas.getContext('2d');
+    const app = {
+        // --- DATA ---
+        state: 'AUTH',
+        score: 0,
+        best: localStorage.getItem('titan_best') || 0,
+        touch: false,
+        enemies: [],
+        player: { a: 0, r: 110, w: 0.8, s: 0.04, b: 0.15 },
+        
+        // --- BOUTONS & AUTH ---
+        login() {
+            const p = document.getElementById('pass').value;
+            if(p.length > 0) { // On accepte n'importe quel code pour que tu puisses entrer
+                document.getElementById('scr-auth').style.display = 'none';
+                document.getElementById('scr-menu').style.display = 'flex';
+                document.getElementById('v-best').innerText = this.best;
+                this.state = 'MENU';
+            } else {
+                document.getElementById('err').innerText = "ERREUR : CHAMP VIDE";
+            }
+        },
 
-    let playing = false;
-    let score = 0;
-    let angle = 0;
-    let press = false;
+        start() {
+            document.getElementById('scr-menu').style.display = 'none';
+            document.getElementById('hud').style.display = 'flex';
+            this.state = 'PLAY';
+            this.score = 0;
+            this.enemies = [];
+            document.getElementById('v-score').innerText = '0';
+            this.spawn();
+        },
 
-    // FONCTION DE CONNEXION
-    function valider() {
-        if(input.value === "1234") {
-            login.style.display = "none";
-            document.getElementById('game-ui').style.display = "flex";
-            playing = true;
-            resize();
-        } else {
-            info.innerText = "CODE FAUX !";
-            info.style.color = "red";
+        arsenal() {
+            alert("ARSENAL MK-1\n- Coque : Titane renforcé\n- Bouclier : Plasma bleu\n- Moteur : Rotation boostée");
+        },
+
+        // --- MOTEUR DE JEU ---
+        spawn() {
+            if(this.state !== 'PLAY') return;
+            const ang = Math.random() * Math.PI * 2;
+            this.enemies.push({
+                x: window.innerWidth/2 + Math.cos(ang) * window.innerWidth,
+                y: window.innerHeight/2 + Math.sin(ang) * window.innerWidth,
+                speed: 2.5 + (this.score/200)
+            });
+            setTimeout(() => this.spawn(), Math.max(400, 1400 - this.score));
+        },
+
+        update() {
+            if(this.state !== 'PLAY') return;
+            this.player.a += this.touch ? this.player.b : this.player.s;
+
+            const cx = window.innerWidth/2;
+            const cy = window.innerHeight/2;
+
+            this.enemies.forEach((e, i) => {
+                const dx = cx - e.x;
+                const dy = cy - e.y;
+                const d = Math.sqrt(dx*dx + dy*dy);
+                
+                e.x += (dx/d) * e.speed;
+                e.y += (dy/d) * e.speed;
+
+                // Collisions
+                if(d < this.player.r + 15 && d > this.player.r - 15) {
+                    const pA = (Math.atan2(dy, dx) + Math.PI) % (Math.PI*2);
+                    const diff = Math.abs(pA - (this.player.a % (Math.PI*2)));
+                    if(diff < this.player.w || diff > (Math.PI*2 - this.player.w)) {
+                        this.enemies.splice(i, 1);
+                        this.score += 10;
+                        document.getElementById('v-score').innerText = this.score;
+                    }
+                }
+
+                if(d < 40) {
+                    this.state = 'MENU';
+                    if(this.score > this.best) {
+                        this.best = this.score;
+                        localStorage.setItem('titan_best', this.best);
+                        document.getElementById('v-best').innerText = this.best;
+                    }
+                    alert("SYSTÈME CRITIQUÉ ! Score : " + this.score);
+                    document.getElementById('hud').style.display = 'none';
+                    document.getElementById('scr-menu').style.display = 'flex';
+                }
+            });
+        },
+
+        render() {
+            const c = document.getElementById('canvas');
+            const ctx = c.getContext('2d');
+            c.width = window.innerWidth;
+            c.height = window.innerHeight;
+
+            ctx.fillStyle = '#050508';
+            ctx.fillRect(0, 0, c.width, c.height);
+
+            if(this.state === 'PLAY') {
+                const cx = c.width/2;
+                const cy = c.height/2;
+
+                // Noyau
+                ctx.shadowBlur = 20; ctx.shadowColor = '#fff';
+                ctx.fillStyle = '#fff';
+                ctx.beginPath(); ctx.arc(cx, cy, 35, 0, Math.PI*2); ctx.fill();
+                ctx.shadowBlur = 0;
+
+                // Bouclier
+                ctx.strokeStyle = this.touch ? '#fff' : '#00f2ff';
+                ctx.lineWidth = 12;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.arc(cx, cy, this.player.r, this.player.a - this.player.w, this.player.a + this.player.w);
+                ctx.stroke();
+
+                // Ennemis
+                ctx.fillStyle = '#ff0055';
+                this.enemies.forEach(e => {
+                    ctx.beginPath(); ctx.arc(e.x, e.y, 8, 0, Math.PI*2); ctx.fill();
+                });
+                this.update();
+            }
+            requestAnimationFrame(() => this.render());
         }
-    }
+    };
 
-    // REDIMENSIONNEMENT
-    function resize() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-    }
-    window.onresize = resize;
-    resize();
+    // --- ECOUTEURS D'EVENEMENTS ---
+    window.addEventListener('touchstart', (e) => { 
+        if(app.state === 'PLAY') app.touch = true; 
+    }, {passive: true});
+    window.addEventListener('touchend', () => app.touch = false, {passive: true});
+    window.addEventListener('mousedown', () => { if(app.state === 'PLAY') app.touch = true; });
+    window.addEventListener('mouseup', () => app.touch = false);
 
-    // BOUCLE DE JEU
-    function loop() {
-        if(playing) {
-            ctx.fillStyle = "black";
-            ctx.fillRect(0,0,canvas.width, canvas.height);
-
-            // Rotation du bouclier
-            angle += press ? 0.15 : 0.05;
-
-            ctx.lineWidth = 15;
-            ctx.strokeStyle = "#0ff";
-            ctx.beginPath();
-            ctx.arc(canvas.width/2, canvas.height/2, 100, angle, angle + 1.2);
-            ctx.stroke();
-
-            // Centre
-            ctx.fillStyle = "white";
-            ctx.beginPath();
-            ctx.arc(canvas.width/2, canvas.height/2, 30, 0, 7);
-            ctx.fill();
-        }
-        requestAnimationFrame(loop);
-    }
-    loop();
-
-    // COMMANDES TACTILES
-    window.addEventListener('touchstart', function(e) { 
-        if(e.target.tagName !== "BUTTON") press = true; 
-    });
-    window.addEventListener('touchend', function() { press = false; });
-    window.addEventListener('mousedown', function(e) { 
-        if(e.target.tagName !== "BUTTON") press = true; 
-    });
-    window.addEventListener('mouseup', function() { press = false; });
-
+    app.render();
 </script>
 </body>
-</html>
+    </html>
+    

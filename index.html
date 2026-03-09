@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TITAN | MOBILE STABLE</title>
+    <title>TITAN ONLINE | FIXED</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&display=swap" rel="stylesheet">
     
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -12,14 +12,17 @@
 
     <style>
         :root { --neon: #00f2ff; --bg: #050505; }
-        body { margin: 0; background: var(--bg); color: #fff; font-family: 'Orbitron', sans-serif; overflow: hidden; touch-action: none; }
+        body { margin: 0; background: var(--bg); color: #fff; font-family: 'Orbitron', sans-serif; overflow: hidden; }
         canvas { display: block; position: fixed; inset: 0; z-index: 1; }
         
-        .screen { position: fixed; inset: 0; z-index: 2000; display: none; flex-direction: column; justify-content: center; align-items: center; background: rgba(0,0,0,0.95); }
-        .panel { background: #0a0f19; padding: 30px; border: 2px solid var(--neon); width: 85%; max-width: 350px; text-align: center; }
+        /* Les écrans sont au-dessus du jeu */
+        .screen { position: fixed; inset: 0; z-index: 2000; display: none; flex-direction: column; justify-content: center; align-items: center; background: rgba(0,0,0,0.9); }
+        .panel { background: #0a0f19; padding: 30px; border: 2px solid var(--neon); width: 85%; max-width: 350px; text-align: center; pointer-events: auto; }
         
-        .btn { background: transparent; border: 1px solid var(--neon); color: var(--neon); padding: 15px; font-family: 'Orbitron'; font-weight: 900; cursor: pointer; width: 100%; text-transform: uppercase; margin: 10px 0; }
-        .btn-google { background: #fff; color: #000; border: none; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn { background: transparent; border: 1px solid var(--neon); color: var(--neon); padding: 15px; font-family: 'Orbitron'; font-weight: 900; cursor: pointer; width: 100%; text-transform: uppercase; margin: 10px 0; pointer-events: auto; }
+        .btn:active { background: var(--neon); color: #000; opacity: 0.8; }
+        
+        .btn-google { background: #fff !important; color: #000 !important; border: none; display: flex; align-items: center; justify-content: center; gap: 10px; }
 
         #hud { position: fixed; top: 15px; left: 0; width: 100%; display: none; justify-content: space-around; z-index: 1000; pointer-events: none; }
         #leaderboard { margin-top: 15px; font-size: 11px; text-align: left; background: rgba(255,255,255,0.05); padding: 10px; border: 1px solid rgba(0,242,255,0.2); }
@@ -29,24 +32,23 @@
 
     <div id="hud">
         <span>SCORE: <span id="v-score">0</span></span>
-        <span>BEST: <span id="v-best">0</span></span>
+        <span>RECORD: <span id="v-best">0</span></span>
     </div>
 
     <div id="scr-login" class="screen" style="display: flex;">
         <div class="panel">
             <h1 style="color: var(--neon); margin:0">TITAN</h1>
-            <p style="font-size: 10px; letter-spacing: 2px; margin-bottom:20px;">MODE MOBILE ACTIVÉ</p>
-            <button class="btn btn-google" onclick="login()">
-                <img src="https://www.google.com/favicon.ico" width="18"> CONNEXION GOOGLE
+            <p style="font-size: 10px; letter-spacing: 2px; margin-bottom:25px;">ONLINE NETWORK</p>
+            <button class="btn btn-google" id="google-btn">
+                <img src="https://www.google.com/favicon.ico" width="18"> GOOGLE LOGIN
             </button>
-            <div id="err-msg" style="color:red; font-size:10px; margin-top:10px;"></div>
         </div>
     </div>
 
     <div id="scr-main" class="screen">
         <div class="panel">
             <div id="user-info" style="margin-bottom:15px;"></div>
-            <button class="btn" onclick="startGame()" style="background:var(--neon); color:#000">Lancer Mission</button>
+            <button class="btn" onclick="startGame()" style="background:var(--neon); color:#000">DÉPLOYER UNITÉ</button>
             <div id="leaderboard">
                 <div id="list">Chargement du Top 5...</div>
             </div>
@@ -57,6 +59,7 @@
     <canvas id="game"></canvas>
 
 <script>
+// --- CONFIG FIREBASE ---
 const firebaseConfig = {
     apiKey: "AIzaSyCSCBazFl8Ent9fin0Xw1rWaMgP9yyKNgA",
     authDomain: "titan-online-e9286.firebaseapp.com",
@@ -65,24 +68,22 @@ const firebaseConfig = {
     messagingSenderId: "486050054558",
     appId: "1:486050054558:web:7364e0f450d151b96d568f"
 };
-
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const auth = firebase.auth();
 
-// --- AUTH (MODE REDIRECT POUR TABLETTE) ---
-function login() {
+// --- AUTHENTIFICATION ---
+// On utilise un ID spécifique pour le bouton Google pour être sûr qu'il capte le clic
+document.getElementById('google-btn').addEventListener('click', () => {
     const provider = new firebase.auth.GoogleAuthProvider();
-    // On utilise Redirect à la place de Popup
     auth.signInWithRedirect(provider);
-}
+});
 
-// Surveillance de la connexion
 auth.onAuthStateChanged(user => {
     if (user) {
         db.ref('players/' + user.uid).on('value', snap => {
-            let cloudData = snap.exists() ? snap.val() : { highscore: 0 };
-            updateUI(user, cloudData.highscore);
+            let best = snap.exists() ? (snap.val().highscore || 0) : 0;
+            updateUI(user, best);
             showScreen('scr-main');
         });
     } else {
@@ -92,8 +93,8 @@ auth.onAuthStateChanged(user => {
 
 function updateUI(user, best) {
     document.getElementById('user-info').innerHTML = `
-        <img src="${user.photoURL}" width="40" style="border-radius:50%; border:2px solid var(--neon)"><br>
-        <b>${user.displayName}</b>
+        <img src="${user.photoURL}" width="45" style="border-radius:50%; border:2px solid var(--neon); margin-bottom:5px;"><br>
+        <b style="font-size:14px">${user.displayName}</b>
     `;
     document.getElementById('v-best').innerText = best;
     loadLeaderboard();
@@ -109,9 +110,9 @@ function loadLeaderboard() {
     });
 }
 
-// --- LOGIQUE JEU ---
+// --- MOTEUR DE JEU ---
 let state = 'MENU', score = 0, isTouching = false;
-let player = { a: 0, rad: 100, w: 0.6 };
+let player = { a: 0, rad: 105, w: 0.7 };
 let enemies = [];
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -134,18 +135,16 @@ function startGame() {
 
 function spawnEnemy() {
     if(state !== 'PLAY') return;
-    let ang = Math.random() * Math.PI * 2;
-    enemies.push({ x: cx + Math.cos(ang)*w, y: cy + Math.sin(ang)*w, s: 1.5 + (score/200) });
-    setTimeout(spawnEnemy, Math.max(600, 2000 - score*10));
+    enemies.push({ x: cx + Math.cos(Math.random()*7)*w, y: cy + Math.sin(Math.random()*7)*w, s: 1.6 + (score/300) });
+    setTimeout(spawnEnemy, Math.max(500, 1800 - score*8));
 }
 
 function update() {
     if(state !== 'PLAY') return;
-    player.a += isTouching ? 0.12 : 0.04;
+    player.a += isTouching ? 0.14 : 0.05;
 
     enemies.forEach((e, i) => {
-        let dx = cx - e.x, dy = cy - e.y;
-        let dist = Math.sqrt(dx*dx + dy*dy);
+        let dx = cx - e.x, dy = cy - e.y, dist = Math.sqrt(dx*dx + dy*dy);
         e.x += (dx/dist) * e.s; e.y += (dy/dist) * e.s;
 
         if(dist < player.rad + 10 && dist > player.rad - 15) {
@@ -156,7 +155,7 @@ function update() {
         if(dist < 40) {
             state = 'MENU';
             let user = auth.currentUser;
-            if(user && score > document.getElementById('v-best').innerText) {
+            if(user && score > parseInt(document.getElementById('v-best').innerText)) {
                 db.ref('players/' + user.uid).update({highscore: score});
                 db.ref('leaderboard/' + user.uid).set({name: user.displayName, score: score});
             }
@@ -168,22 +167,32 @@ function update() {
 function draw() {
     ctx.fillStyle = '#050505'; ctx.fillRect(0,0,w,h);
     let g = ctx.createRadialGradient(cx, cy, 0, cx, cy, 40);
-    g.addColorStop(0, '#fff'); g.addColorStop(0.3, '#00f2ff'); g.addColorStop(1, 'transparent');
+    g.addColorStop(0, '#fff'); g.addColorStop(0.3, var(--neon)); g.addColorStop(1, 'transparent');
     ctx.beginPath(); ctx.arc(cx, cy, 40, 0, Math.PI*2); ctx.fillStyle = g; ctx.fill();
 
     if(state === 'PLAY') {
         ctx.beginPath(); ctx.arc(cx, cy, player.rad, player.a - player.w, player.a + player.w);
-        ctx.strokeStyle = '#fff'; ctx.lineWidth = 8; ctx.stroke();
-        enemies.forEach(e => { ctx.fillStyle = '#ff0055'; ctx.beginPath(); ctx.arc(e.x, e.y, 6, 0, Math.PI*2); ctx.fill(); });
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 10; ctx.stroke();
+        enemies.forEach(e => { ctx.fillStyle = '#ff0055'; ctx.beginPath(); ctx.arc(e.x, e.y, 7, 0, Math.PI*2); ctx.fill(); });
     }
     update();
     requestAnimationFrame(draw);
 }
 
-window.addEventListener('touchstart', (e) => { isTouching = true; e.preventDefault(); }, {passive: false});
+// CORRECTION DES CONTROLES : On n'écoute que le Canvas
+canvas.addEventListener('touchstart', (e) => { 
+    if(state === 'PLAY') {
+        isTouching = true; 
+        e.preventDefault(); 
+    }
+}, {passive: false});
+
 window.addEventListener('touchend', () => { isTouching = false; });
+window.addEventListener('mousedown', () => { if(state === 'PLAY') isTouching = true; });
+window.addEventListener('mouseup', () => { isTouching = false; });
+
 draw();
 </script>
 </body>
-    </html>
-                
+</html>
+    

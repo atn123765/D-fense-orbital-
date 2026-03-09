@@ -3,76 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TITAN | LIGUE & CLASSEMENT</title>
+    <title>TITAN | ONLINE FIX</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&display=swap" rel="stylesheet">
-    
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
     <style>
-        :root { --neon: #00f2ff; --danger: #ff0055; --gold: #ffd700; --bg: #050505; }
-        body { margin: 0; background: var(--bg); color: #fff; font-family: 'Orbitron', sans-serif; overflow: hidden; touch-action: none; }
-        canvas { display: block; position: fixed; inset: 0; z-index: 1; }
-        
-        /* --- ECRANS --- */
-        .screen { position: fixed; inset: 0; z-index: 2000; display: none; flex-direction: column; justify-content: center; align-items: center; background: rgba(0,0,0,0.92); backdrop-filter: blur(15px); }
-        .panel { background: rgba(10, 15, 25, 0.98); padding: 30px; border: 2px solid var(--neon); width: 85%; max-width: 400px; text-align: center; clip-path: polygon(10% 0, 100% 0, 100% 90%, 90% 100%, 0 100%, 0 10%); box-shadow: 0 0 30px rgba(0, 242, 255, 0.2); }
-        
-        /* --- BOUTONS --- */
-        .btn { background: transparent; border: 1px solid var(--neon); color: var(--neon); padding: 14px; font-family: 'Orbitron'; font-weight: 900; cursor: pointer; margin: 8px 0; width: 100%; text-transform: uppercase; transition: 0.3s; }
-        .btn:hover { background: rgba(0, 242, 255, 0.1); }
-        .btn-google { background: #fff; color: #000; border: none; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 14px; }
-
-        /* --- LEADERBOARD --- */
-        #leaderboard { margin-top: 20px; font-size: 11px; text-align: left; background: rgba(0,0,0,0.4); padding: 15px; border: 1px solid rgba(0,242,255,0.2); border-radius: 8px; }
-        .player-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .rank-num { color: var(--neon); font-weight: 900; margin-right: 8px; }
-        
-        /* --- HUD --- */
-        #hud { position: fixed; top: 0; left: 0; width: 100%; padding: 15px; display: none; grid-template-columns: 1fr 1fr 1fr; z-index: 1000; pointer-events: none; box-sizing: border-box; }
-        .league-tag { font-size: 10px; font-weight: 900; padding: 2px 8px; border-radius: 4px; color: #000; margin-top: 5px; display: inline-block; }
+        :root { --neon: #00f2ff; --bg: #050505; }
+        body { margin: 0; background: var(--bg); color: #fff; font-family: 'Orbitron', sans-serif; overflow: hidden; }
+        .screen { position: fixed; inset: 0; z-index: 2000; display: none; flex-direction: column; justify-content: center; align-items: center; background: rgba(0,0,0,0.95); backdrop-filter: blur(10px); }
+        .panel { background: #0a0f19; padding: 30px; border: 2px solid var(--neon); width: 80%; max-width: 400px; text-align: center; clip-path: polygon(10% 0, 100% 0, 100% 90%, 90% 100%, 0 100%, 0 10%); }
+        .btn { background: transparent; border: 1px solid var(--neon); color: var(--neon); padding: 15px; font-family: 'Orbitron'; font-weight: 900; cursor: pointer; width: 100%; text-transform: uppercase; margin: 10px 0; }
+        .btn-google { background: #fff; color: #000; border: none; }
+        #leaderboard { margin-top: 20px; font-size: 11px; text-align: left; background: rgba(255,255,255,0.05); padding: 10px; border: 1px solid rgba(0,242,255,0.2); }
+        #debug-msg { color: #ff0055; font-size: 10px; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-    <div id="hud">
-        <div>SCORE<br><span id="v-score" style="font-size: 20px; color: var(--neon);">0</span></div>
-        <div style="text-align: center;">LIGUE<br><span id="v-league" style="font-size: 12px; font-weight: 900;">BRONZE</span></div>
-        <div style="text-align: right;"><button class="btn" style="width:auto; padding:5px 12px; pointer-events:auto;" onclick="pauseGame()">PAUSE</button></div>
-    </div>
-
     <div id="scr-login" class="screen" style="display: flex;">
         <div class="panel">
-            <h1 style="color: var(--neon); font-size: 45px; margin:0">TITAN</h1>
-            <p style="font-size: 10px; letter-spacing: 4px; margin-bottom:30px; opacity: 0.8;">ONLINE NETWORK</p>
-            <button class="btn btn-google" onclick="loginWithGoogle()">
-                <img src="https://www.google.com/favicon.ico" width="20"> SE CONNECTER AVEC GOOGLE
-            </button>
-            <p style="font-size: 9px; opacity: 0.5; margin-top:20px;">Accédez au classement et sauvez votre progression.</p>
+            <h1 style="color: var(--neon); margin:0">TITAN</h1>
+            <p style="font-size: 10px; letter-spacing: 3px;">INITIALISATION...</p>
+            <button class="btn btn-google" onclick="login()">CONNEXION GOOGLE</button>
+            <div id="debug-msg"></div>
         </div>
     </div>
 
     <div id="scr-main" class="screen">
         <div class="panel">
-            <div id="user-info" style="margin-bottom: 20px;">
-                </div>
-            <button class="btn" onclick="startGame()" style="background: var(--neon); color: #000;">DÉPLOYER UNITÉ</button>
-            <button class="btn" onclick="showScreen('scr-shop')">ARSENAL</button>
-            
+            <div id="user-info"></div>
+            <button class="btn" onclick="alert('Lancement...')">DÉPLOYER</button>
             <div id="leaderboard">
-                <div style="text-align:center; font-weight:900; color:var(--gold); margin-bottom:10px; font-size:12px;">TOP 5 MONDIAL</div>
-                <div id="leaderboard-list">Synchronisation...</div>
+                <div style="text-align:center; color:var(--neon)">CLASSEMENT MONDIAL</div>
+                <div id="list"></div>
             </div>
-            
-            <button class="btn" style="border:none; font-size:9px; margin-top:10px; opacity:0.5;" onclick="auth.signOut()">DÉCONNEXION</button>
+            <button class="btn" style="font-size:10px; border:none" onclick="auth.signOut()">Déconnexion</button>
         </div>
     </div>
 
-    <canvas id="game"></canvas>
-
 <script>
-// --- TA CONFIGURATION FIREBASE ---
 const firebaseConfig = {
     apiKey: "AIzaSyCSCBazFl8Ent9fin0Xw1rWaMgP9yyKNgA",
     authDomain: "titan-online-e9286.firebaseapp.com",
@@ -86,114 +56,55 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const auth = firebase.auth();
 
-// --- VARIABLES ---
-let data = { name: "Pilote", photo: "", highscore: 0, credits: 0 };
-let state = 'MENU', score = 0, player = { a: 0, rad: 105, w: 0.6 };
-const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
-let w, h, cx, cy;
-
-// --- LIGUES ---
-function getLeague(s) {
-    if(s >= 5000) return { n: "MAÎTRE", c: "#ff0055" };
-    if(s >= 2000) return { n: "DIAMANT", c: "#00f2ff" };
-    if(s >= 1000) return { n: "OR", c: "#ffd700" };
-    if(s >= 500)  return { n: "ARGENT", c: "#c0c0c0" };
-    return { n: "BRONZE", c: "#cd7f32" };
-}
-
-// --- CONNEXION & AUTH ---
-function loginWithGoogle() {
+function login() {
     const provider = new firebase.auth.GoogleAuthProvider();
+    const debug = document.getElementById('debug-msg');
+    debug.innerText = "Ouverture de la fenêtre...";
+
     auth.signInWithPopup(provider).then(res => {
-        // La redirection vers le menu se fera via onAuthStateChanged
-    }).catch(e => alert("Erreur : " + e.message));
+        debug.innerText = "Succès ! Chargement du profil...";
+        // On force le passage au menu ici
+        document.getElementById('scr-login').style.display = 'none';
+        document.getElementById('scr-main').style.display = 'flex';
+        updateUI(res.user);
+    }).catch(e => {
+        debug.innerText = "ERREUR : " + e.code;
+        console.error(e);
+    });
 }
 
-// Détecte automatiquement si l'utilisateur est connecté
+// Sécurité : Si déjà connecté, on saute le login
 auth.onAuthStateChanged(user => {
     if (user) {
-        data.name = user.displayName;
-        data.photo = user.photoURL;
-        loadUserCloudData(user.uid);
+        document.getElementById('scr-login').style.display = 'none';
+        document.getElementById('scr-main').style.display = 'flex';
+        updateUI(user);
     } else {
-        showScreen('scr-login');
+        document.getElementById('scr-login').style.display = 'flex';
+        document.getElementById('scr-main').style.display = 'none';
     }
 });
 
-function loadUserCloudData(uid) {
-    db.ref('players/' + uid).on('value', snap => {
-        if(snap.exists()) data = {...data, ...snap.val()};
-        updateMenuUI();
-        showScreen('scr-main');
-    });
-}
-
-function updateMenuUI() {
-    const league = getLeague(data.highscore);
+function updateUI(user) {
     document.getElementById('user-info').innerHTML = `
-        <img src="${data.photo}" width="50" style="border-radius:50%; border:3px solid ${league.c}; margin-bottom:10px;"><br>
-        <span style="font-weight:900; font-size:16px;">${data.name}</span><br>
-        <span class="league-tag" style="background:${league.c}">${league.n}</span>
+        <img src="${user.photoURL}" width="50" style="border-radius:50%; border:2px solid var(--neon)"><br>
+        <b style="font-size:18px">${user.displayName}</b>
     `;
-    updateLeaderboard();
+    loadLeaderboard();
 }
 
-function updateLeaderboard() {
-    db.ref('leaderboard').orderByChild('score').limitToLast(5).on('value', snap => {
-        const list = document.getElementById('leaderboard-list');
+function loadLeaderboard() {
+    db.ref('leaderboard').limitToLast(5).on('value', snap => {
+        const list = document.getElementById('list');
         list.innerHTML = "";
-        let players = [];
-        snap.forEach(child => players.push(child.val()));
-        players.reverse().forEach((p, i) => {
-            const l = getLeague(p.score);
-            list.innerHTML += `
-                <div class="player-row">
-                    <span><span class="rank-num">#${i+1}</span> ${p.name.split(' ')[0]}</span>
-                    <span style="color:${l.c}; font-weight:900;">${p.score}</span>
-                </div>`;
+        snap.forEach(c => {
+            const p = c.val();
+            list.innerHTML += `<div style="display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #222">
+                <span>${p.name}</span><b>${p.score || 0}</b>
+            </div>`;
         });
     });
 }
-
-// --- LOGIQUE JEU ---
-function resize() { w=canvas.width=window.innerWidth; h=canvas.height=window.innerHeight; cx=w/2; cy=h/2; }
-window.onresize = resize; resize();
-
-function showScreen(id) {
-    document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
-    if(id !== 'none') document.getElementById(id).style.display = 'flex';
-}
-
-function startGame() {
-    state = 'PLAY'; score = 0;
-    document.getElementById('hud').style.display = 'grid';
-    document.getElementById('v-score').innerText = "0";
-    const league = getLeague(data.highscore);
-    document.getElementById('v-league').innerText = league.n;
-    document.getElementById('v-league').style.color = league.c;
-    showScreen('none');
-}
-
-function pauseGame() { state = 'PAUSE'; showScreen('scr-main'); }
-
-function draw() {
-    ctx.fillStyle = '#050505'; ctx.fillRect(0,0,w,h);
-    
-    // Planète Design 5.1
-    let g = ctx.createRadialGradient(cx, cy, 0, cx, cy, 45);
-    g.addColorStop(0, '#fff'); g.addColorStop(0.3, '#00f2ff'); g.addColorStop(1, 'transparent');
-    ctx.beginPath(); ctx.arc(cx, cy, 45, 0, Math.PI*2); ctx.fillStyle = g; ctx.fill();
-
-    if(state === 'PLAY') {
-        ctx.beginPath();
-        ctx.arc(cx, cy, player.rad, player.a - player.w, player.a + player.w);
-        ctx.strokeStyle = '#fff'; ctx.lineWidth = 8; ctx.stroke();
-    }
-    requestAnimationFrame(draw);
-}
-draw();
 </script>
 </body>
-    </html>
-    
+</html>

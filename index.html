@@ -3,92 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TITAN ONLINE | V12</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <title>TITAN ONLINE | V13</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&display=swap" rel="stylesheet">
     
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
     <style>
-        :root { --neon: #00f2ff; --danger: #ff0055; --gold: #ffd700; --bg: #020205; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        :root { --neon: #00f2ff; --bg: #020205; }
         body { margin: 0; background: var(--bg); color: #fff; font-family: 'Orbitron', sans-serif; overflow: hidden; touch-action: none; }
-        
         canvas { display: block; position: fixed; inset: 0; z-index: 1; }
 
-        /* UI STRATEGY */
-        .screen { position: fixed; inset: 0; z-index: 2000; display: none; flex-direction: column; justify-content: center; align-items: center; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); }
-        .panel { 
-            background: rgba(10, 20, 40, 0.95); border: 2px solid var(--neon); padding: 30px; width: 90%; max-width: 380px; text-align: center;
-            box-shadow: 0 0 30px rgba(0,242,255,0.2); border-radius: 5px;
-        }
-
-        h1 { font-size: 38px; margin: 0; letter-spacing: 4px; color: #fff; text-shadow: 0 0 15px var(--neon); }
-
-        .btn { 
-            background: transparent; border: 1px solid var(--neon); color: var(--neon); padding: 15px; font-family: 'Orbitron'; font-weight: 700; cursor: pointer; width: 100%; text-transform: uppercase; margin: 10px 0; display: block;
-        }
-        .btn:active { background: var(--neon); color: #000; }
-        .btn-main { background: var(--neon); color: #000; border: none; font-size: 18px; }
-        .btn-google { background: #fff; color: #000; font-size: 14px; border: none; font-weight: 900; }
-
-        /* HUD */
-        #hud { position: fixed; top: 0; left: 0; width: 100%; height: 50px; display: none; align-items: center; justify-content: space-around; z-index: 1000; pointer-events: none; background: rgba(0,0,0,0.5); }
-        #hud b { color: var(--neon); }
-        .pause-btn { pointer-events: auto; background: none; border: 1px solid var(--neon); color: var(--neon); padding: 4px 10px; font-family: 'Orbitron'; cursor: pointer; font-size: 10px; }
-
-        /* LISTES */
-        .list-box { background: rgba(255,255,255,0.05); margin-top: 15px; padding: 10px; font-size: 11px; text-align: left; border: 1px solid rgba(0,242,255,0.2); }
-        .row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        /* INTERFACE */
+        .screen { position: fixed; inset: 0; z-index: 2000; display: none; flex-direction: column; justify-content: center; align-items: center; background: rgba(0,0,0,0.9); }
+        .panel { background: #0a101e; border: 2px solid var(--neon); padding: 30px; width: 85%; max-width: 350px; text-align: center; }
+        
+        .btn { background: var(--neon); color: #000; border: none; padding: 15px; font-family: 'Orbitron'; font-weight: 900; width: 100%; margin: 10px 0; cursor: pointer; text-transform: uppercase; }
+        .btn-white { background: #fff; }
+        
+        #error-log { color: #ff0055; font-size: 10px; margin-top: 10px; word-break: break-all; }
+        #hud { position: fixed; top: 10px; width: 100%; display: none; justify-content: space-around; z-index: 1000; color: var(--neon); font-weight: 900; }
     </style>
 </head>
 <body>
 
-    <div id="hud">
-        <span>SCORE: <b id="v-score">0</b></span>
-        <button class="pause-btn" onclick="togglePause()">PAUSE</button>
-        <span>BEST: <b id="v-best">0</b></span>
-    </div>
+    <div id="hud">SCORE: <span id="v-score">0</span> | BEST: <span id="v-best">0</span></div>
 
     <div id="scr-login" class="screen" style="display: flex;">
         <div class="panel">
-            <h1>TITAN</h1>
-            <p style="font-size: 10px; color: var(--neon); margin-bottom: 25px;">CONNECTER LE PILOTE</p>
-            <button class="btn btn-google" id="login-trigger">SE CONNECTER AVEC GOOGLE</button>
+            <h1 style="text-shadow: 0 0 10px var(--neon);">TITAN V13</h1>
+            <p style="font-size: 10px;">SYSTÈME DE CONNEXION</p>
+            <button class="btn btn-white" onclick="doLogin()">SE CONNECTER AVEC GOOGLE</button>
+            <div id="error-log"></div>
         </div>
     </div>
 
     <div id="scr-main" class="screen">
         <div class="panel">
-            <div id="user-info" style="margin-bottom: 20px;"></div>
-            <button class="btn btn-main" onclick="startGame()">LANCER MISSION</button>
-            <button class="btn" onclick="showScreen('scr-arsenal')">ARSENAL</button>
-            <div class="list-box">
-                <div style="text-align:center; color: var(--gold); margin-bottom: 5px;">CLASSEMENT MONDIAL</div>
-                <div id="list">Chargement...</div>
-            </div>
-            <button class="btn" style="border:none; font-size:9px; opacity:0.4" onclick="auth.signOut()">DÉCONNEXION</button>
-        </div>
-    </div>
-
-    <div id="scr-arsenal" class="screen">
-        <div class="panel">
-            <h2 style="color: var(--neon);">ARSENAL</h2>
-            <p style="font-size:12px">ÉQUIPEMENT ACTUEL : MK-1</p>
-            <div style="background:rgba(255,255,255,0.05); padding:10px; text-align:left; font-size:10px;">
-                - Bouclier Plasma (Standard)<br>
-                - Rotation : 100%<br>
-                - Récupération : Instantanée
-            </div>
-            <button class="btn" onclick="showScreen('scr-main')" style="margin-top:20px;">RETOUR</button>
+            <div id="user-info" style="margin-bottom:15px;"></div>
+            <button class="btn" onclick="startGame()">LANCER LE JEU</button>
+            <button class="btn" style="background:transparent; color:var(--neon); border:1px solid var(--neon)" onclick="showArsenal()">ARSENAL</button>
+            <button class="btn" style="background:transparent; color:red; font-size:10px;" onclick="auth.signOut()">DECONNEXION</button>
         </div>
     </div>
 
     <canvas id="game"></canvas>
 
 <script>
-// --- CONFIG FIREBASE ---
+// 1. CONFIGURATION (VERIFIE BIEN CES CLES)
 const firebaseConfig = {
     apiKey: "AIzaSyCSCBazFl8Ent9fin0Xw1rWaMgP9yyKNgA",
     authDomain: "titan-online-e9286.firebaseapp.com",
@@ -97,51 +60,55 @@ const firebaseConfig = {
     messagingSenderId: "486050054558",
     appId: "1:486050054558:web:7364e0f450d151b96d568f"
 };
-firebase.initializeApp(firebaseConfig);
+
+// Initialisation avec capture d'erreur
+try {
+    firebase.initializeApp(firebaseConfig);
+} catch (e) {
+    document.getElementById('error-log').innerText = "Erreur Init: " + e.message;
+}
+
 const db = firebase.database();
 const auth = firebase.auth();
 
-// --- AUTH LOGIC ---
-document.getElementById('login-trigger').addEventListener('click', () => {
-    document.getElementById('login-trigger').innerText = "REDIRECTION...";
+// 2. FONCTION CONNEXION (LA PLUS ROBUSTE)
+function doLogin() {
     const provider = new firebase.auth.GoogleAuthProvider();
+    // On force le mode Redirect qui est le seul à passer les bloqueurs de pub
     auth.signInWithRedirect(provider);
-});
+}
 
+// 3. SURVEILLANCE DES ETATS
 auth.onAuthStateChanged(user => {
     if (user) {
+        showScreen('scr-main');
+        document.getElementById('user-info').innerHTML = `<b>${user.displayName}</b>`;
         db.ref('players/' + user.uid).on('value', snap => {
-            let best = snap.exists() ? (snap.val().highscore || 0) : 0;
-            updateUI(user, best);
-            showScreen('scr-main');
+            const val = snap.val();
+            document.getElementById('v-best').innerText = val ? val.highscore : 0;
         });
     } else {
         showScreen('scr-login');
     }
 });
 
-function updateUI(user, best) {
-    document.getElementById('user-info').innerHTML = `
-        <img src="${user.photoURL}" width="45" style="border-radius:50%; border:2px solid var(--neon);"><br>
-        <b>${user.displayName}</b>
-    `;
-    document.getElementById('v-best').innerText = best;
-    loadLeaderboard();
+// Capture les erreurs de redirection Google
+auth.getRedirectResult().catch(e => {
+    document.getElementById('error-log').innerText = "Erreur Google: " + e.message;
+});
+
+function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+    document.getElementById(id).style.display = 'flex';
 }
 
-function loadLeaderboard() {
-    db.ref('leaderboard').orderByChild('score').limitToLast(5).on('value', snap => {
-        const list = document.getElementById('list'); list.innerHTML = "";
-        let players = []; snap.forEach(c => players.push(c.val()));
-        players.reverse().forEach((p, i) => {
-            list.innerHTML += `<div class="row"><span>#${i+1} ${p.name.split(' ')[0]}</span><b>${p.score}</b></div>`;
-        });
-    });
+function showArsenal() {
+    alert("MENU ARSENAL\n- Bouclier Plasma MK-1\n- Laser de défense (Bientôt)");
 }
 
-// --- GAME LOGIC ---
+// 4. MOTEUR DE JEU (SIMPLIFIÉ POUR STABILITÉ)
 let state = 'MENU', score = 0, isTouching = false;
-let player = { a: 0, rad: 100, w: 0.7, speed: 0.05, boost: 0.14 };
+let player = { a: 0, rad: 100, w: 0.6 };
 let enemies = [];
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -150,73 +117,56 @@ let w, h, cx, cy;
 function resize() { w=canvas.width=window.innerWidth; h=canvas.height=window.innerHeight; cx=w/2; cy=h/2; }
 window.onresize = resize; resize();
 
-function showScreen(id) {
-    document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
-    if(id !== 'none') document.getElementById(id).style.display = 'flex';
-}
-
 function startGame() {
     state = 'PLAY'; score = 0; enemies = [];
-    document.getElementById('hud').style.display = 'flex';
     showScreen('none');
+    document.getElementById('hud').style.display = 'flex';
     spawnEnemy();
-}
-
-function togglePause() {
-    if(state === 'PLAY') { state = 'PAUSE'; alert("PAUSE - Cliquez OK pour reprendre"); state = 'PLAY'; }
 }
 
 function spawnEnemy() {
     if(state !== 'PLAY') return;
-    let a = Math.random() * Math.PI * 2;
-    enemies.push({ x: cx + Math.cos(a)*w, y: cy + Math.sin(a)*w, s: 2 + (score/500) });
-    setTimeout(spawnEnemy, Math.max(400, 1800 - score*5));
-}
-
-function update() {
-    if(state !== 'PLAY') return;
-    player.a += isTouching ? player.boost : player.speed;
-    enemies.forEach((e, i) => {
-        let dx = cx - e.x, dy = cy - e.y, d = Math.sqrt(dx*dx + dy*dy);
-        e.x += (dx/d)*e.s; e.y += (dy/d)*e.s;
-        if(d < player.rad + 10 && d > player.rad - 15) {
-            let pA = (Math.atan2(dy, dx) + Math.PI) % (Math.PI*2);
-            let diff = Math.min(Math.abs(pA - (player.a % (Math.PI*2))), Math.PI*2 - Math.abs(pA - (player.a % (Math.PI*2))));
-            if(diff < player.w) { enemies.splice(i, 1); score += 10; document.getElementById('v-score').innerText = score; }
-        }
-        if(d < 40) {
-            state = 'MENU';
-            if(score > parseInt(document.getElementById('v-best').innerText)) {
-                db.ref('players/' + auth.currentUser.uid).update({highscore: score});
-                db.ref('leaderboard/' + auth.currentUser.uid).set({name: auth.currentUser.displayName, score: score});
-            }
-            showScreen('scr-main');
-            document.getElementById('hud').style.display = 'none';
-        }
-    });
+    let ang = Math.random() * Math.PI * 2;
+    enemies.push({ x: cx + Math.cos(ang)*w, y: cy + Math.sin(ang)*w, s: 2 });
+    setTimeout(spawnEnemy, 1500);
 }
 
 function draw() {
     ctx.fillStyle = '#020205'; ctx.fillRect(0,0,w,h);
-    // PLANETE
+    
+    // Planète
     ctx.beginPath(); ctx.arc(cx, cy, 40, 0, Math.PI*2); ctx.fillStyle = var(--neon); ctx.fill();
+
     if(state === 'PLAY') {
-        // BOUCLIER
+        player.a += isTouching ? 0.12 : 0.04;
+        
+        // Bouclier
         ctx.beginPath(); ctx.arc(cx, cy, player.rad, player.a - player.w, player.a + player.w);
-        ctx.strokeStyle = '#fff'; ctx.lineWidth = 12; ctx.lineCap = 'round'; ctx.stroke();
-        // ENNEMIS
-        enemies.forEach(e => { ctx.fillStyle = 'red'; ctx.beginPath(); ctx.arc(e.x, e.y, 7, 0, Math.PI*2); ctx.fill(); });
-        update();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 10; ctx.stroke();
+
+        enemies.forEach((e, i) => {
+            let dx = cx - e.x, dy = cy - e.y, d = Math.sqrt(dx*dx + dy*dy);
+            e.x += (dx/d)*e.s; e.y += (dy/d)*e.s;
+            
+            // Collision bouclier
+            if(d < 110 && d > 90) {
+                let pA = (Math.atan2(dy, dx) + Math.PI) % (Math.PI*2);
+                let diff = Math.min(Math.abs(pA - (player.a % (Math.PI*2))), Math.PI*2 - Math.abs(pA - (player.a % (Math.PI*2))));
+                if(diff < player.w) { enemies.splice(i, 1); score += 10; document.getElementById('v-score').innerText = score; }
+            }
+            if(d < 40) { state = 'MENU'; location.reload(); }
+            
+            ctx.fillStyle = 'red'; ctx.beginPath(); ctx.arc(e.x, e.y, 6, 0, Math.PI*2); ctx.fill();
+        });
     }
     requestAnimationFrame(draw);
 }
 
-// TOUCH CONTROL
-canvas.addEventListener('touchstart', (e) => { if(state==='PLAY') { isTouching = true; e.preventDefault(); } }, {passive:false});
+// CONTROLES
+window.addEventListener('touchstart', (e) => { if(state === 'PLAY') isTouching = true; });
 window.addEventListener('touchend', () => isTouching = false);
-
 draw();
 </script>
 </body>
-                </html>
+    </html>
     

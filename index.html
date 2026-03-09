@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TITAN ONLINE | ULTIMATE</title>
+    <title>TITAN ONLINE | V12</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -15,71 +15,59 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { margin: 0; background: var(--bg); color: #fff; font-family: 'Orbitron', sans-serif; overflow: hidden; touch-action: none; }
         
-        canvas { display: block; position: fixed; inset: 0; z-index: 1; filter: contrast(1.2) brightness(1.1); }
+        canvas { display: block; position: fixed; inset: 0; z-index: 1; }
 
-        /* UI BASE */
-        .screen { position: fixed; inset: 0; z-index: 2000; display: none; flex-direction: column; justify-content: center; align-items: center; background: radial-gradient(circle at center, rgba(0,20,40,0.8) 0%, rgba(0,0,0,0.95) 100%); backdrop-filter: blur(8px); }
+        /* UI STRATEGY */
+        .screen { position: fixed; inset: 0; z-index: 2000; display: none; flex-direction: column; justify-content: center; align-items: center; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); }
         .panel { 
-            background: rgba(10, 15, 30, 0.9); border: 2px solid var(--neon); padding: 30px; width: 90%; max-width: 400px; text-align: center;
-            clip-path: polygon(15% 0, 100% 0, 100% 85%, 85% 100%, 0 100%, 0 15%);
-            box-shadow: 0 0 40px rgba(0,242,255,0.15), inset 0 0 20px rgba(0,242,255,0.05);
-            animation: panelIn 0.4s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+            background: rgba(10, 20, 40, 0.95); border: 2px solid var(--neon); padding: 30px; width: 90%; max-width: 380px; text-align: center;
+            box-shadow: 0 0 30px rgba(0,242,255,0.2); border-radius: 5px;
         }
 
-        @keyframes panelIn { from { opacity: 0; transform: scale(0.9) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        h1 { font-size: 38px; margin: 0; letter-spacing: 4px; color: #fff; text-shadow: 0 0 15px var(--neon); }
 
-        h1 { font-size: 42px; font-weight: 900; margin: 0; letter-spacing: 5px; background: linear-gradient(to bottom, #fff, var(--neon)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 10px var(--neon)); }
-
-        /* BOUTONS */
         .btn { 
-            background: transparent; border: 1px solid var(--neon); color: var(--neon); padding: 15px; font-family: 'Orbitron'; font-weight: 700; cursor: pointer; width: 100%; text-transform: uppercase; margin: 10px 0; position: relative; overflow: hidden; transition: 0.2s; 
+            background: transparent; border: 1px solid var(--neon); color: var(--neon); padding: 15px; font-family: 'Orbitron'; font-weight: 700; cursor: pointer; width: 100%; text-transform: uppercase; margin: 10px 0; display: block;
         }
-        .btn:active { background: var(--neon); color: #000; box-shadow: 0 0 20px var(--neon); }
-        .btn-main { background: var(--neon); color: #000; border: none; font-size: 18px; box-shadow: 0 0 15px rgba(0,242,255,0.5); }
+        .btn:active { background: var(--neon); color: #000; }
+        .btn-main { background: var(--neon); color: #000; border: none; font-size: 18px; }
         .btn-google { background: #fff; color: #000; font-size: 14px; border: none; font-weight: 900; }
 
         /* HUD */
-        #hud { position: fixed; top: 0; left: 0; width: 100%; height: 60px; display: none; align-items: center; justify-content: space-between; padding: 0 20px; z-index: 1000; pointer-events: none; background: linear-gradient(to bottom, rgba(0,242,255,0.1), transparent); }
-        #hud b { color: var(--neon); font-size: 18px; text-shadow: 0 0 10px var(--neon); }
-        .pause-trigger { pointer-events: auto; background: none; border: 1px solid var(--neon); color: var(--neon); padding: 5px 12px; font-family: 'Orbitron'; cursor: pointer; }
+        #hud { position: fixed; top: 0; left: 0; width: 100%; height: 50px; display: none; align-items: center; justify-content: space-around; z-index: 1000; pointer-events: none; background: rgba(0,0,0,0.5); }
+        #hud b { color: var(--neon); }
+        .pause-btn { pointer-events: auto; background: none; border: 1px solid var(--neon); color: var(--neon); padding: 4px 10px; font-family: 'Orbitron'; cursor: pointer; font-size: 10px; }
 
-        /* LEADERBOARD & ARSENAL */
-        .list-box { background: rgba(0,0,0,0.4); border: 1px solid rgba(0,242,255,0.2); margin-top: 15px; padding: 10px; font-size: 11px; text-align: left; }
+        /* LISTES */
+        .list-box { background: rgba(255,255,255,0.05); margin-top: 15px; padding: 10px; font-size: 11px; text-align: left; border: 1px solid rgba(0,242,255,0.2); }
         .row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .row:last-child { border: none; }
-        .row.me { color: var(--gold); }
-
-        .stat-btn { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 8px; margin: 5px 0; font-size: 10px; width: 100%; color: #fff; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <div id="hud">
-        <div>SCORE: <b id="v-score">0</b></div>
-        <button class="pause-trigger" onclick="togglePause()">PAUSE</button>
-        <div>RECORD: <b id="v-best">0</b></div>
+        <span>SCORE: <b id="v-score">0</b></span>
+        <button class="pause-btn" onclick="togglePause()">PAUSE</button>
+        <span>BEST: <b id="v-best">0</b></span>
     </div>
 
     <div id="scr-login" class="screen" style="display: flex;">
         <div class="panel">
             <h1>TITAN</h1>
-            <p style="font-size: 10px; color: var(--neon); margin-bottom: 30px;">SECURE CONNECTION REQUIRED</p>
-            <button class="btn btn-google" onclick="login()">CONNECT WITH GOOGLE</button>
+            <p style="font-size: 10px; color: var(--neon); margin-bottom: 25px;">CONNECTER LE PILOTE</p>
+            <button class="btn btn-google" id="login-trigger">SE CONNECTER AVEC GOOGLE</button>
         </div>
     </div>
 
     <div id="scr-main" class="screen">
         <div class="panel">
             <div id="user-info" style="margin-bottom: 20px;"></div>
-            
-            <button class="btn btn-main" onclick="startGame()">DÉPLOYER UNITÉ</button>
-            <button class="btn" onclick="showSubMenu('scr-arsenal')">ARSENAL & UPGRADES</button>
-            
+            <button class="btn btn-main" onclick="startGame()">LANCER MISSION</button>
+            <button class="btn" onclick="showScreen('scr-arsenal')">ARSENAL</button>
             <div class="list-box">
-                <div style="text-align:center; color: var(--gold); font-weight: 700; margin-bottom: 5px;">TOP PILOTES MONDIAL</div>
-                <div id="list">Synchronisation...</div>
+                <div style="text-align:center; color: var(--gold); margin-bottom: 5px;">CLASSEMENT MONDIAL</div>
+                <div id="list">Chargement...</div>
             </div>
-            
             <button class="btn" style="border:none; font-size:9px; opacity:0.4" onclick="auth.signOut()">DÉCONNEXION</button>
         </div>
     </div>
@@ -87,25 +75,20 @@
     <div id="scr-arsenal" class="screen">
         <div class="panel">
             <h2 style="color: var(--neon);">ARSENAL</h2>
-            <div class="stat-btn">BOUCLIER (TAILLE) <span style="color:var(--neon)">MAX</span></div>
-            <div class="stat-btn">VITESSE ROTATION <span style="color:var(--neon)">120%</span></div>
-            <div class="stat-btn">ÉNERGIE CINÉTIQUE <span style="color:var(--neon)">ON</span></div>
-            <button class="btn" onclick="showSubMenu('scr-main')" style="margin-top:20px;">RETOUR</button>
-        </div>
-    </div>
-
-    <div id="scr-pause" class="screen">
-        <div class="panel">
-            <h2 style="color: var(--neon);">MISSION EN PAUSE</h2>
-            <button class="btn btn-main" onclick="togglePause()">REPRENDRE</button>
-            <button class="btn" onclick="location.reload()">MENU PRINCIPAL</button>
+            <p style="font-size:12px">ÉQUIPEMENT ACTUEL : MK-1</p>
+            <div style="background:rgba(255,255,255,0.05); padding:10px; text-align:left; font-size:10px;">
+                - Bouclier Plasma (Standard)<br>
+                - Rotation : 100%<br>
+                - Récupération : Instantanée
+            </div>
+            <button class="btn" onclick="showScreen('scr-main')" style="margin-top:20px;">RETOUR</button>
         </div>
     </div>
 
     <canvas id="game"></canvas>
 
 <script>
-// --- CONFIGURATION FIREBASE ---
+// --- CONFIG FIREBASE ---
 const firebaseConfig = {
     apiKey: "AIzaSyCSCBazFl8Ent9fin0Xw1rWaMgP9yyKNgA",
     authDomain: "titan-online-e9286.firebaseapp.com",
@@ -118,32 +101,18 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const auth = firebase.auth();
 
-// --- VARIABLES ---
-let data = { highscore: 0, name: "Pilote" };
-let state = 'MENU', score = 0, isTouching = false;
-let player = { a: 0, rad: 100, w: 0.7, rotSpeed: 0.05, boost: 0.15 };
-let enemies = [];
-const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
-let w, h, cx, cy;
-
-// --- GESTION DES ÉCRANS ---
-function showScreen(id) {
-    document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
-    if(id !== 'none') document.getElementById(id).style.display = 'flex';
-}
-function showSubMenu(id) { showScreen(id); }
-
-// --- AUTH ---
-function login() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
+// --- AUTH LOGIC ---
+document.getElementById('login-trigger').addEventListener('click', () => {
+    document.getElementById('login-trigger').innerText = "REDIRECTION...";
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithRedirect(provider);
+});
 
 auth.onAuthStateChanged(user => {
     if (user) {
-        data.name = user.displayName;
-        data.photo = user.photoURL;
         db.ref('players/' + user.uid).on('value', snap => {
-            data.highscore = snap.exists() ? (snap.val().highscore || 0) : 0;
-            updateMenuUI();
+            let best = snap.exists() ? (snap.val().highscore || 0) : 0;
+            updateUI(user, best);
             showScreen('scr-main');
         });
     } else {
@@ -151,12 +120,12 @@ auth.onAuthStateChanged(user => {
     }
 });
 
-function updateMenuUI() {
+function updateUI(user, best) {
     document.getElementById('user-info').innerHTML = `
-        <img src="${data.photo}" width="50" style="border-radius:50%; border:2px solid var(--neon); box-shadow: 0 0 15px var(--neon);"><br>
-        <span style="font-weight:900; font-size:16px;">${data.name}</span>
+        <img src="${user.photoURL}" width="45" style="border-radius:50%; border:2px solid var(--neon);"><br>
+        <b>${user.displayName}</b>
     `;
-    document.getElementById('v-best').innerText = data.highscore;
+    document.getElementById('v-best').innerText = best;
     loadLeaderboard();
 }
 
@@ -165,15 +134,26 @@ function loadLeaderboard() {
         const list = document.getElementById('list'); list.innerHTML = "";
         let players = []; snap.forEach(c => players.push(c.val()));
         players.reverse().forEach((p, i) => {
-            let isMe = (p.name === data.name) ? 'me' : '';
-            list.innerHTML += `<div class="row ${isMe}"><span>#${i+1} ${p.name.split(' ')[0]}</span><b>${p.score}</b></div>`;
+            list.innerHTML += `<div class="row"><span>#${i+1} ${p.name.split(' ')[0]}</span><b>${p.score}</b></div>`;
         });
     });
 }
 
-// --- JEU ---
+// --- GAME LOGIC ---
+let state = 'MENU', score = 0, isTouching = false;
+let player = { a: 0, rad: 100, w: 0.7, speed: 0.05, boost: 0.14 };
+let enemies = [];
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+let w, h, cx, cy;
+
 function resize() { w=canvas.width=window.innerWidth; h=canvas.height=window.innerHeight; cx=w/2; cy=h/2; }
 window.onresize = resize; resize();
+
+function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+    if(id !== 'none') document.getElementById(id).style.display = 'flex';
+}
 
 function startGame() {
     state = 'PLAY'; score = 0; enemies = [];
@@ -183,42 +163,32 @@ function startGame() {
 }
 
 function togglePause() {
-    if(state === 'PLAY') { state = 'PAUSE'; showScreen('scr-pause'); }
-    else if(state === 'PAUSE') { state = 'PLAY'; showScreen('none'); }
+    if(state === 'PLAY') { state = 'PAUSE'; alert("PAUSE - Cliquez OK pour reprendre"); state = 'PLAY'; }
 }
 
 function spawnEnemy() {
     if(state !== 'PLAY') return;
-    let ang = Math.random() * Math.PI * 2;
-    enemies.push({ x: cx + Math.cos(ang)*w, y: cy + Math.sin(ang)*w, s: 1.8 + (score/400) });
+    let a = Math.random() * Math.PI * 2;
+    enemies.push({ x: cx + Math.cos(a)*w, y: cy + Math.sin(a)*w, s: 2 + (score/500) });
     setTimeout(spawnEnemy, Math.max(400, 1800 - score*5));
 }
 
 function update() {
     if(state !== 'PLAY') return;
-    
-    player.a += isTouching ? player.boost : player.rotSpeed;
-
+    player.a += isTouching ? player.boost : player.speed;
     enemies.forEach((e, i) => {
-        let dx = cx - e.x, dy = cy - e.y, dist = Math.sqrt(dx*dx + dy*dy);
-        e.x += (dx/dist) * e.s; e.y += (dy/dist) * e.s;
-
-        // Collision Bouclier
-        if(dist < player.rad + 10 && dist > player.rad - 15) {
-            let pAng = (Math.atan2(dy, dx) + Math.PI) % (Math.PI*2);
-            let diff = Math.min(Math.abs(pAng - (player.a % (Math.PI*2))), Math.PI*2 - Math.abs(pAng - (player.a % (Math.PI*2))));
-            if(diff < player.w) {
-                enemies.splice(i, 1);
-                score += 10;
-                document.getElementById('v-score').innerText = score;
-            }
+        let dx = cx - e.x, dy = cy - e.y, d = Math.sqrt(dx*dx + dy*dy);
+        e.x += (dx/d)*e.s; e.y += (dy/d)*e.s;
+        if(d < player.rad + 10 && d > player.rad - 15) {
+            let pA = (Math.atan2(dy, dx) + Math.PI) % (Math.PI*2);
+            let diff = Math.min(Math.abs(pA - (player.a % (Math.PI*2))), Math.PI*2 - Math.abs(pA - (player.a % (Math.PI*2))));
+            if(diff < player.w) { enemies.splice(i, 1); score += 10; document.getElementById('v-score').innerText = score; }
         }
-        // Game Over
-        if(dist < 40) {
+        if(d < 40) {
             state = 'MENU';
-            if(score > data.highscore) {
-                db.ref('players/' + auth.currentUser.uid).set({highscore: score});
-                db.ref('leaderboard/' + auth.currentUser.uid).set({name: data.name, score: score});
+            if(score > parseInt(document.getElementById('v-best').innerText)) {
+                db.ref('players/' + auth.currentUser.uid).update({highscore: score});
+                db.ref('leaderboard/' + auth.currentUser.uid).set({name: auth.currentUser.displayName, score: score});
             }
             showScreen('scr-main');
             document.getElementById('hud').style.display = 'none';
@@ -228,42 +198,25 @@ function update() {
 
 function draw() {
     ctx.fillStyle = '#020205'; ctx.fillRect(0,0,w,h);
-    
-    // Planète (Cœur Néon)
-    ctx.shadowBlur = 20; ctx.shadowColor = var(--neon);
-    ctx.beginPath(); ctx.arc(cx, cy, 40, 0, Math.PI*2);
-    ctx.fillStyle = '#fff'; ctx.fill();
-    ctx.shadowBlur = 0;
-
-    if(state !== 'MENU') {
-        // Bouclier
-        ctx.beginPath();
-        ctx.arc(cx, cy, player.rad, player.a - player.w, player.a + player.w);
-        ctx.strokeStyle = isTouching ? var(--danger) : var(--neon);
-        ctx.lineWidth = 12; ctx.lineCap = 'round';
-        ctx.stroke();
-
-        // Ennemis
-        enemies.forEach(e => {
-            ctx.fillStyle = var(--danger);
-            ctx.beginPath(); ctx.arc(e.x, e.y, 7, 0, Math.PI*2); ctx.fill();
-        });
+    // PLANETE
+    ctx.beginPath(); ctx.arc(cx, cy, 40, 0, Math.PI*2); ctx.fillStyle = var(--neon); ctx.fill();
+    if(state === 'PLAY') {
+        // BOUCLIER
+        ctx.beginPath(); ctx.arc(cx, cy, player.rad, player.a - player.w, player.a + player.w);
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 12; ctx.lineCap = 'round'; ctx.stroke();
+        // ENNEMIS
+        enemies.forEach(e => { ctx.fillStyle = 'red'; ctx.beginPath(); ctx.arc(e.x, e.y, 7, 0, Math.PI*2); ctx.fill(); });
+        update();
     }
-    
-    if(state === 'PLAY') update();
     requestAnimationFrame(draw);
 }
 
-// CONTRÔLES
-window.addEventListener('touchstart', (e) => { 
-    if(e.target.tagName !== 'BUTTON') { isTouching = true; e.preventDefault(); }
-}, {passive: false});
+// TOUCH CONTROL
+canvas.addEventListener('touchstart', (e) => { if(state==='PLAY') { isTouching = true; e.preventDefault(); } }, {passive:false});
 window.addEventListener('touchend', () => isTouching = false);
-window.addEventListener('keydown', (e) => { if(e.code === 'Space') isTouching = true; if(e.code === 'Escape') togglePause(); });
-window.addEventListener('keyup', (e) => { if(e.code === 'Space') isTouching = false; });
 
 draw();
 </script>
 </body>
-    </html>
+                </html>
     

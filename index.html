@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ORBITAL CORE</title>
+    <style>
+        :root {
+            --bg: #020617;
+            --accent: #38bdf8;
+            --danger: #ef4444;
+            --text: #f8fafc;
+            --subtext: #94a3b8;
+            --panel-bg: rgba(15, 23, 42, 0.8);
+        }
+
+        body { 
+            margin: 0; background: var(--bg); color: var(--text);
+            font-family: 'Inter', -apple-system, sans-serif; 
+            overflow: hidden; touch-action: none; user-select: none;
+        }
+        canvas { display: block; }
+        
+        .screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: none; flex-direction: column; justify-content: center; align-items: center;
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+        }
+        #screen-game { backdrop-filter: none; pointer-events: none; justify-content: space-between; padding: 30px; box-sizing: border-box; }
+        
+        .panel {
+            background: var(--panel-bg); padding: 40px; border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.08); width: 85%; max-width: 380px;
+            text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+        }
+        
+        h1 { margin: 0; font-size: 28px; font-weight: 900; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text); }
+        .divider { height: 1px; background: var(--accent); width: 40px; margin: 15px auto 25px; opacity: 0.5; }
+        h2 { margin: 0 0 20px 0; font-size: 14px; font-weight: 500; color: var(--subtext); text-transform: uppercase; letter-spacing: 0.1em; }
+        
+        .stats-bar { font-size: 16px; margin-bottom: 25px; font-weight: 600; color: var(--accent); }
+        
+        button {
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text); padding: 18px; font-size: 13px; font-weight: 700;
+            border-radius: 4px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 100%; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.1em;
+        }
+        button:active { background: var(--accent); color: var(--bg); border-color: var(--accent); transform: translateY(2px); }
+        button.primary { background: var(--accent); color: var(--bg); border: none; }
+        button.secondary { background: transparent; border: none; color: var(--subtext); font-size: 11px; margin-top: 10px; }
+        button:disabled { opacity: 0.2; pointer-events: none; }
+
+        .shop-row { 
+            display: flex; justify-content: space-between; align-items: center; 
+            background: rgba(255,255,255,0.03); padding: 12px 15px; border-radius: 6px; 
+            margin-bottom: 8px; text-align: left; border: 1px solid rgba(255,255,255,0.05);
+        }
+        .shop-row div b { display: block; font-size: 12px; color: var(--text); }
+        .shop-row div span { font-size: 10px; color: var(--subtext); }
+        .shop-row button { width: auto; margin: 0; padding: 8px 12px; font-size: 11px; }
+
+        .hud-top { display: flex; justify-content: space-between; width: 100%; font-size: 14px; font-weight: 800; letter-spacing: 0.1em; }
+    </style>
+</head>
+<body>
+
+    <div id="screen-game" class="screen">
+        <div class="hud-top">
+            <span id="hud-score">SCORE 0</span>
+            <span id="hud-credits" style="color: var(--accent)">CREDITS 0</span>
+        </div>
+    </div>
+
+    <div id="screen-main" class="screen">
+        <div class="panel">
+            <h1>ORBITAL</h1>
+            <div class="divider"></div>
+            <h2>Système de Défense Alpha</h2>
+            <div class="stats-bar" id="main-credits">CREDITS 0</div>
+            <button class="primary" onclick="startGame()">Initialiser</button>
+            <button onclick="nav('screen-shop')">Arsenal & Upgrades</button>
+            <button onclick="nav('screen-settings')">Configuration</button>
+        </div>
+    </div>
+
+    <div id="screen-shop" class="screen">
+        <div class="panel">
+            <h1>ARSENAL</h1>
+            <div class="divider"></div>
+            <div class="stats-bar" id="shop-credits">CREDITS 0</div>
+            
+            <div class="shop-row">
+                <div><b>DIAMETRE BOUCLIER</b><span id="lvl-shield">NIVEAU 1</span></div>
+                <button id="btn-up-shield" onclick="buyShield()">50 C</button>
+            </div>
+            
+            <div class="shop-row">
+                <div><b>MODULE CANON</b><span id="txt-cannon">STATUT : OFF</span></div>
+                <button id="btn-up-cannon" onclick="buyCannon()">150 C</button>
+            </div>
+
+            <button class="secondary" onclick="nav('screen-main')">FERMER L'INTERFACE</button>
+        </div>
+    </div>
+
+    <div id="screen-settings" class="screen">
+        <div class="panel">
+            <h1>CONFIG</h1>
+            <div class="divider"></div>
+            <button id="btn-particles" onclick="toggleParticles()">PARTICULES : ACTIF</button>
+            <button onclick="resetData()" style="color: var(--danger); border-color: rgba(239, 68, 68, 0.2);">WIPE DATA</button>
+            <button class="secondary" onclick="nav('screen-main')">RETOUR</button>
+        </div>
+    </div>
+
+    <div id="screen-gameover" class="screen">
+        <div class="panel">
+            <h1 style="color: var(--danger)">CRITICAL FAILURE</h1>
+            <div class="divider" style="background: var(--danger)"></div>
+            <h2 id="go-score">SCORE 0</h2>
+            <h2 id="go-credits" style="color: var(--accent)">+ 0 CREDITS</h2>
+            <button class="primary" onclick="startGame()">REBOOT</button>
+            <button onclick="nav('screen-main')">TERMINAL</button>
+        </div>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+let saveData = JSON.parse(localStorage.getItem('orbitalDataV3_1')) || {
+    credits: 0, highScore: 0, shieldLevel: 1, cannonUnlocked: false, particlesOn: true
+};
+
+function save() { localStorage.setItem('orbitalDataV3_1', JSON.stringify(saveData)); updateUI(); }
+
+let width, height, centerX, centerY, state = 'MENU', score = 0, sessionCredits = 0, frameCount = 0;
+let shield = { angle: 0, width: 0.6, radius: 75, speed: 0.13 };
+let enemies = [], particles = [], bullets = [], inputs = { left: false, right: false };
+
+function nav(id) {
+    document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+    document.getElementById(id).style.display = 'flex';
+    updateUI();
+}
+
+function updateUI() {
+    document.getElementById('main-credits').innerText = `CREDITS ${saveData.credits}`;
+    document.getElementById('shop-credits').innerText = `CREDITS ${saveData.credits}`;
+    let sCost = saveData.shieldLevel * 50;
+    document.getElementById('lvl-shield').innerText = `NIVEAU ${saveData.shieldLevel}`;
+    let bS = document.getElementById('btn-up-shield');
+    if(saveData.shieldLevel >= 5) { bS.innerText = "MAX"; bS.disabled = true; }
+    else { bS.innerText = `${sCost} C`; bS.disabled = saveData.credits < sCost; }
+    let bC = document.getElementById('btn-up-cannon');
+    if(saveData.cannonUnlocked) { document.getElementById('txt-cannon').innerText = "STATUT : ONLINE"; bC.innerText = "ACTIF"; bC.disabled = true; }
+    else { bC.disabled = saveData.credits < 150; }
+    document.getElementById('btn-particles').innerText = `PARTICULES : ${saveData.particlesOn ? 'ACTIF' : 'INACTIF'}`;
+}
+
+function buyShield() {
+    let c = saveData.shieldLevel * 50;
+    if(saveData.credits >= c && saveData.shieldLevel < 5) { saveData.credits -= c; saveData.shieldLevel++; save(); }
+}
+function buyCannon() {
+    if(saveData.credits >= 150 && !saveData.cannonUnlocked) { saveData.credits -= 150; saveData.cannonUnlocked = true; save(); }
+}
+function toggleParticles() { saveData.particlesOn = !saveData.particlesOn; save(); }
+function resetData() { if(confirm("CONFIRMER SUPPRESSION ?")) { localStorage.removeItem('orbitalDataV3_1'); location.reload(); } }
+
+function resize() {
+    width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight;
+    centerX = width / 2; centerY = height / 2;
+}
+window.addEventListener('resize', resize);
+resize();
+
+canvas.addEventListener('touchstart', (e) => {
+    if(state !== 'PLAYING') return; e.preventDefault();
+    for(let i=0; i<e.touches.length; i++) {
+        if(e.touches[i].clientX < width / 2) inputs.left = true; else inputs.right = true;
+    }
+}, {passive: false});
+canvas.addEventListener('touchend', (e) => {
+    inputs.left = false; inputs.right = false;
+});
+
+function spawnP(x, y, col) {
+    if (!saveData.particlesOn) return;
+    for (let i = 0; i < 10; i++) {
+        particles.push({
+            x, y, vx: (Math.random() - 0.5) * 5, vy: (Math.random() - 0.5) * 5,
+            life: 1.0, color: col, size: Math.random() * 2
+        });
+    }
+}
+
+function startGame() {
+    state = 'PLAYING'; score = 0; sessionCredits = 0; frameCount = 0;
+    enemies = []; particles = []; bullets = []; shield.angle = 0;
+    shield.width = 0.5 + (saveData.shieldLevel * 0.1); 
+    document.getElementById('hud-score').innerText = `SCORE 0`;
+    document.getElementById('hud-credits').innerText = `CREDITS 0`;
+    nav('screen-game');
+}
+
+function update() {
+    if (state !== 'PLAYING') return;
+    frameCount++;
+    if (inputs.left) shield.angle -= shield.speed;
+    if (inputs.right) shield.angle += shield.speed;
+    shield.angle = (shield.angle + Math.PI * 2) % (Math.PI * 2);
+
+    if (saveData.cannonUnlocked && frameCount % 35 === 0) {
+        bullets.push({
+            x: centerX + Math.cos(shield.angle) * shield.radius,
+            y: centerY + Math.sin(shield.angle) * shield.radius,
+            vx: Math.cos(shield.angle) * 10, vy: Math.sin(shield.angle) * 10
+        });
+    }
+
+    for (let i = bullets.length - 1; i >= 0; i--) {
+        bullets[i].x += bullets[i].vx; bullets[i].y += bullets[i].vy;
+        if (bullets[i].x < 0 || bullets[i].x > width || bullets[i].y < 0 || bullets[i].y > height) bullets.splice(i, 1);
+    }
+
+    if (frameCount % Math.max(20, 70 - Math.floor(score/4)) === 0) {
+        const a = Math.random() * Math.PI * 2;
+        enemies.push({
+            x: centerX + Math.cos(a) * Math.max(width, height),
+            y: centerY + Math.sin(a) * Math.max(width, height),
+            speed: 3 + (score * 0.04)
+        });
+    }
+
+    for (let i = enemies.length - 1; i >= 0; i--) {
+        let en = enemies[i];
+        const aC = Math.atan2(centerY - en.y, centerX - en.x);
+        en.x += Math.cos(aC) * en.speed; en.y += Math.sin(aC) * en.speed;
+        const dist = Math.hypot(centerX - en.x, centerY - en.y);
+
+        for (let j = bullets.length - 1; j >= 0; j--) {
+            if (Math.hypot(bullets[j].x - en.x, bullets[j].y - en.y) < 15) {
+                spawnP(en.x, en.y, varProp('--accent'));
+                bullets.splice(j, 1); enemies.splice(i, 1);
+                score++; sessionCredits++; break;
+            }
+        }
+        if (!enemies[i]) continue;
+
+        if (dist < shield.radius + 8 && dist > shield.radius - 10) {
+            let aE = (Math.atan2(en.y - centerY, en.x - centerX) + Math.PI * 2) % (Math.PI * 2);
+            let diff = Math.abs(aE - shield.angle);
+            if (diff > Math.PI) diff = Math.PI * 2 - diff;
+            if (diff < shield.width) {
+                spawnP(en.x, en.y, '#fff');
+                enemies.splice(i, 1); score++; sessionCredits++;
+                document.getElementById('hud-score').innerText = `SCORE ${score}`;
+                document.getElementById('hud-credits').innerText = `CREDITS ${sessionCredits}`;
+                continue;
+            }
+        }
+        if (dist < 20) {
+            state = 'GAMEOVER'; saveData.credits += sessionCredits;
+            if(score > saveData.highScore) saveData.highScore = score;
+            save();
+            document.getElementById('go-score').innerText = `SCORE ${score}`;
+            document.getElementById('go-credits').innerText = `+ ${sessionCredits} CREDITS`;
+            nav('screen-gameover');
+        }
+    }
+    for (let i = particles.length - 1; i >= 0; i--) {
+        particles[i].x += particles[i].vx; particles[i].y += particles[i].vy;
+        particles[i].life -= 0.04; if (particles[i].life <= 0) particles.splice(i, 1);
+    }
+}
+
+function varProp(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+function draw() {
+    ctx.fillStyle = varProp('--bg');
+    ctx.fillRect(0, 0, width, height);
+
+    if(state === 'PLAYING') {
+        ctx.beginPath(); ctx.arc(centerX, centerY, 22, 0, Math.PI * 2);
+        ctx.fillStyle = varProp('--accent'); ctx.fill();
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, shield.radius, shield.angle - shield.width, shield.angle + shield.width);
+        ctx.lineWidth = 4; ctx.strokeStyle = '#fff'; ctx.stroke();
+    }
+
+    ctx.fillStyle = '#fff';
+    bullets.forEach(b => { ctx.beginPath(); ctx.arc(b.x, b.y, 3, 0, Math.PI * 2); ctx.fill(); });
+
+    ctx.fillStyle = varProp('--danger');
+    enemies.forEach(en => { ctx.beginPath(); ctx.arc(en.x, en.y, 6, 0, Math.PI * 2); ctx.fill(); });
+
+    particles.forEach(p => {
+        ctx.globalAlpha = p.life; ctx.fillStyle = p.color;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+    });
+    ctx.globalAlpha = 1.0;
+    update();
+    requestAnimationFrame(draw);
+}
+nav('screen-main');
+draw();
+</script>
+</body>
+  </html>
+  

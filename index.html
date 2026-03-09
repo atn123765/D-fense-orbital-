@@ -3,32 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TITAN V21 | FINAL</title>
+    <title>SNAKE COMBAT RIG</title>
     <style>
-        :root { --n: #00f2ff; --d: #ff0055; --bg: #050508; }
+        :root { --neon: #00f2ff; --danger: #ff0055; --bg: #050508; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { margin: 0; background: var(--bg); color: #fff; font-family: 'Segoe UI', Roboto, sans-serif; overflow: hidden; touch-action: none; }
+        body { margin: 0; background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; overflow: hidden; touch-action: none; }
         
-        /* ECRANS */
-        .scr { position: fixed; inset: 0; z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; background: radial-gradient(circle, #101520 0%, #050508 100%); padding: 20px; }
-        .pnl { border: 2px solid var(--n); padding: 30px; width: 100%; max-width: 360px; text-align: center; box-shadow: 0 0 30px rgba(0,242,255,0.1); border-radius: 5px; background: rgba(0,0,0,0.8); }
+        /* INTERFACES */
+        .scr { position: fixed; inset: 0; z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(5, 5, 8, 0.95); }
+        .pnl { border: 2px solid var(--neon); padding: 30px; width: 90%; max-width: 400px; text-align: center; border-radius: 10px; }
         
-        /* TYPO & INPUTS */
-        h1 { font-size: 45px; margin: 0 0 20px; letter-spacing: 5px; color: var(--n); text-shadow: 0 0 15px var(--n); font-weight: 900; }
-        input { width: 100%; padding: 18px; margin-bottom: 15px; background: #111; border: 1px solid #333; color: #fff; font-size: 18px; border-radius: 4px; }
-        input:focus { border-color: var(--n); outline: none; }
+        h1 { font-size: 35px; color: var(--neon); text-shadow: 0 0 15px var(--neon); margin: 0 0 20px; }
+        .btn { width: 100%; padding: 20px; margin: 10px 0; border: none; background: var(--neon); color: #000; font-weight: 900; font-size: 18px; cursor: pointer; border-radius: 5px; }
         
-        /* BOUTONS (FIX TACTILE) */
-        .btn { width: 100%; padding: 20px; margin: 10px 0; border: none; background: var(--n); color: #000; font-weight: 900; font-size: 16px; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; border-radius: 4px; }
-        .btn:active { background: #fff; transform: translateY(2px); }
-        .btn-alt { background: none; border: 1px solid var(--n); color: var(--n); }
-
         /* HUD */
-        #hud { position: fixed; top: 0; width: 100%; padding: 20px; display: none; justify-content: space-between; z-index: 50; font-weight: bold; font-size: 20px; pointer-events: none; }
-        #hud span { color: var(--n); text-shadow: 0 0 10px var(--n); }
+        #hud { position: fixed; top: 0; width: 100%; padding: 15px; display: none; justify-content: space-between; z-index: 50; font-weight: bold; color: var(--neon); }
         
-        canvas { display: block; position: fixed; inset: 0; z-index: 10; }
-        #err { color: var(--d); font-size: 13px; margin-bottom: 15px; min-height: 18px; font-weight: bold; }
+        /* CONTRÔLES TACTILES */
+        #ctrl { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); display: none; grid-template-columns: repeat(3, 80px); grid-template-rows: repeat(2, 80px); gap: 10px; z-index: 60; }
+        .c-btn { width: 80px; height: 80px; background: rgba(0, 242, 255, 0.2); border: 2px solid var(--neon); color: var(--neon); font-size: 30px; display: flex; align-items: center; justify-content: center; border-radius: 10px; }
+        
+        canvas { display: block; background: #000; margin: auto; }
     </style>
 </head>
 <body>
@@ -38,163 +33,168 @@
         <div>BEST: <span id="v-best">0</span></div>
     </div>
 
-    <div id="scr-auth" class="scr">
+    <div id="scr-menu" class="scr">
         <div class="pnl">
-            <h1>TITAN</h1>
-            <div id="err">ENTREZ VOTRE CODE D'ACCÈS</div>
-            <input type="text" id="pass" placeholder="CODE (ex: 1234)" autocomplete="off">
-            <button class="btn" onclick="app.login()">INITIALISER LE SYSTÈME</button>
+            <h1>SNAKE RIG</h1>
+            <p style="color: #aaa; margin-bottom: 20px;">DÉTRUISEZ LES CIBLES ROUGES</p>
+            <button class="btn" onclick="game.init()">LANCER LA MISSION</button>
+            <button class="btn" style="background:none; border:1px solid #555; color:#555; font-size:12px;" onclick="localStorage.clear(); location.reload();">RESET DATA</button>
         </div>
     </div>
 
-    <div id="scr-menu" class="scr" style="display:none;">
-        <div class="pnl">
-            <h2 style="margin-top:0">UNITÉ PRÊTE</h2>
-            <button class="btn" onclick="app.start()">DÉPLOYER UNITÉ</button>
-            <button class="btn btn-alt" onclick="app.arsenal()">ARSENAL MK-1</button>
-            <button class="btn btn-alt" style="margin-top:20px; border-color:#555; color:#555; font-size:10px;" onclick="location.reload()">DÉCONNEXION</button>
-        </div>
-    </div>
+    <canvas id="stage"></canvas>
 
-    <canvas id="canvas"></canvas>
+    <div id="ctrl">
+        <div style="grid-column: 2" class="c-btn" onclick="game.setDir(0, -1)">▲</div>
+        <div style="grid-row: 2; grid-column: 1" class="c-btn" onclick="game.setDir(-1, 0)">◀</div>
+        <div style="grid-row: 2; grid-column: 2" class="c-btn" onclick="game.setDir(0, 1)">▼</div>
+        <div style="grid-row: 2; grid-column: 3" class="c-btn" onclick="game.setDir(1, 0)">▶</div>
+    </div>
 
 <script>
-    const app = {
-        // --- DATA ---
-        state: 'AUTH',
-        score: 0,
-        best: localStorage.getItem('titan_best') || 0,
-        touch: false,
-        enemies: [],
-        player: { a: 0, r: 110, w: 0.8, s: 0.04, b: 0.15 },
+const game = {
+    tile: 20,
+    count: 0,
+    score: 0,
+    best: localStorage.getItem('snake_best') || 0,
+    state: 'MENU',
+    
+    snake: { x: 160, y: 160, dx: 20, dy: 0, cells: [], maxCells: 4 },
+    food: { x: 320, y: 320 },
+    bullets: [],
+    enemies: [],
+
+    init() {
+        this.canvas = document.getElementById('stage');
+        this.ctx = this.canvas.getContext('2d');
+        this.canvas.width = Math.floor(window.innerWidth / 20) * 20;
+        this.canvas.height = Math.floor((window.innerHeight - 200) / 20) * 20;
         
-        // --- BOUTONS & AUTH ---
-        login() {
-            const p = document.getElementById('pass').value;
-            if(p.length > 0) { // On accepte n'importe quel code pour que tu puisses entrer
-                document.getElementById('scr-auth').style.display = 'none';
-                document.getElementById('scr-menu').style.display = 'flex';
-                document.getElementById('v-best').innerText = this.best;
-                this.state = 'MENU';
-            } else {
-                document.getElementById('err').innerText = "ERREUR : CHAMP VIDE";
-            }
-        },
+        document.getElementById('scr-menu').style.display = 'none';
+        document.getElementById('hud').style.display = 'flex';
+        document.getElementById('ctrl').style.display = 'grid';
+        document.getElementById('v-best').innerText = this.best;
+        
+        this.state = 'PLAY';
+        this.loop();
+    },
 
-        start() {
-            document.getElementById('scr-menu').style.display = 'none';
-            document.getElementById('hud').style.display = 'flex';
-            this.state = 'PLAY';
-            this.score = 0;
-            this.enemies = [];
-            document.getElementById('v-score').innerText = '0';
-            this.spawn();
-        },
+    setDir(x, y) {
+        let dx = x * this.tile;
+        let dy = y * this.tile;
+        if (dx !== -this.snake.dx && dy !== -this.snake.dy) {
+            this.snake.dx = dx;
+            this.snake.dy = dy;
+        }
+    },
 
-        arsenal() {
-            alert("ARSENAL MK-1\n- Coque : Titane renforcé\n- Bouclier : Plasma bleu\n- Moteur : Rotation boostée");
-        },
-
-        // --- MOTEUR DE JEU ---
-        spawn() {
-            if(this.state !== 'PLAY') return;
-            const ang = Math.random() * Math.PI * 2;
+    spawnEnemy() {
+        if (Math.random() < 0.05) {
             this.enemies.push({
-                x: window.innerWidth/2 + Math.cos(ang) * window.innerWidth,
-                y: window.innerHeight/2 + Math.sin(ang) * window.innerWidth,
-                speed: 2.5 + (this.score/200)
+                x: Math.floor(Math.random() * (this.canvas.width / this.tile)) * this.tile,
+                y: Math.floor(Math.random() * (this.canvas.height / this.tile)) * this.tile,
+                life: 3
             });
-            setTimeout(() => this.spawn(), Math.max(400, 1400 - this.score));
-        },
+        }
+    },
 
-        update() {
-            if(this.state !== 'PLAY') return;
-            this.player.a += this.touch ? this.player.b : this.player.s;
+    loop() {
+        if (this.state !== 'PLAY') return;
+        requestAnimationFrame(() => this.loop());
 
-            const cx = window.innerWidth/2;
-            const cy = window.innerHeight/2;
+        if (++this.count < 6) return; // Vitesse du jeu
+        this.count = 0;
 
-            this.enemies.forEach((e, i) => {
-                const dx = cx - e.x;
-                const dy = cy - e.y;
-                const d = Math.sqrt(dx*dx + dy*dy);
-                
-                e.x += (dx/d) * e.speed;
-                e.y += (dy/d) * e.speed;
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-                // Collisions
-                if(d < this.player.r + 15 && d > this.player.r - 15) {
-                    const pA = (Math.atan2(dy, dx) + Math.PI) % (Math.PI*2);
-                    const diff = Math.abs(pA - (this.player.a % (Math.PI*2)));
-                    if(diff < this.player.w || diff > (Math.PI*2 - this.player.w)) {
+        // Déplacement Snake
+        this.snake.x += this.snake.dx;
+        this.snake.y += this.snake.dy;
+
+        // Murs (téléportation)
+        if (this.snake.x < 0) this.snake.x = this.canvas.width - this.tile;
+        else if (this.snake.x >= this.canvas.width) this.snake.x = 0;
+        if (this.snake.y < 0) this.snake.y = this.canvas.height - this.tile;
+        else if (this.snake.y >= this.canvas.height) this.snake.y = 0;
+
+        this.snake.cells.unshift({ x: this.snake.x, y: this.snake.y });
+        if (this.snake.cells.length > this.snake.maxCells) this.snake.cells.pop();
+
+        // Tir automatique
+        this.bullets.push({ x: this.snake.x, y: this.snake.y, dx: this.snake.dx * 1.5, dy: this.snake.dy * 1.5 });
+
+        // Dessin Food
+        this.ctx.fillStyle = '#0f0';
+        this.ctx.fillRect(this.food.x, this.food.y, this.tile - 1, this.tile - 1);
+
+        // Dessin Snake
+        this.ctx.fillStyle = var(--neon);
+        this.snake.cells.forEach((cell, index) => {
+            this.ctx.fillRect(cell.x, cell.y, this.tile - 1, this.tile - 1);
+            if (cell.x === this.food.x && cell.y === this.food.y) {
+                this.snake.maxCells++;
+                this.score += 10;
+                document.getElementById('v-score').innerText = this.score;
+                this.food.x = Math.floor(Math.random() * (this.canvas.width / this.tile)) * this.tile;
+                this.food.y = Math.floor(Math.random() * (this.canvas.height / this.tile)) * this.tile;
+            }
+            // Collision avec soi-même
+            for (let i = index + 1; i < this.snake.cells.length; i++) {
+                if (cell.x === this.snake.cells[i].x && cell.y === this.snake.cells[i].y) this.gameOver();
+            }
+        });
+
+        // Gestion Balles
+        this.ctx.fillStyle = '#fff';
+        this.bullets.forEach((b, i) => {
+            b.x += b.dx; b.y += b.dy;
+            this.ctx.fillRect(b.x + 8, b.y + 8, 4, 4);
+            if (b.x < 0 || b.x > this.canvas.width || b.y < 0 || b.y > this.canvas.height) this.bullets.splice(i, 1);
+        });
+
+        // Gestion Ennemis
+        this.spawnEnemy();
+        this.enemies.forEach((en, i) => {
+            this.ctx.fillStyle = en.life > 1 ? var(--danger) : '#ffa500';
+            this.ctx.fillRect(en.x, en.y, this.tile - 1, this.tile - 1);
+            
+            // Collision Balle/Ennemi
+            this.bullets.forEach((b, bi) => {
+                if (b.x > en.x && b.x < en.x + this.tile && b.y > en.y && b.y < en.y + this.tile) {
+                    en.life--;
+                    this.bullets.splice(bi, 1);
+                    if (en.life <= 0) {
                         this.enemies.splice(i, 1);
-                        this.score += 10;
+                        this.score += 50;
                         document.getElementById('v-score').innerText = this.score;
                     }
                 }
-
-                if(d < 40) {
-                    this.state = 'MENU';
-                    if(this.score > this.best) {
-                        this.best = this.score;
-                        localStorage.setItem('titan_best', this.best);
-                        document.getElementById('v-best').innerText = this.best;
-                    }
-                    alert("SYSTÈME CRITIQUÉ ! Score : " + this.score);
-                    document.getElementById('hud').style.display = 'none';
-                    document.getElementById('scr-menu').style.display = 'flex';
-                }
             });
-        },
 
-        render() {
-            const c = document.getElementById('canvas');
-            const ctx = c.getContext('2d');
-            c.width = window.innerWidth;
-            c.height = window.innerHeight;
+            // Collision Snake/Ennemi
+            if (this.snake.x === en.x && this.snake.y === en.y) this.gameOver();
+        });
+    },
 
-            ctx.fillStyle = '#050508';
-            ctx.fillRect(0, 0, c.width, c.height);
-
-            if(this.state === 'PLAY') {
-                const cx = c.width/2;
-                const cy = c.height/2;
-
-                // Noyau
-                ctx.shadowBlur = 20; ctx.shadowColor = '#fff';
-                ctx.fillStyle = '#fff';
-                ctx.beginPath(); ctx.arc(cx, cy, 35, 0, Math.PI*2); ctx.fill();
-                ctx.shadowBlur = 0;
-
-                // Bouclier
-                ctx.strokeStyle = this.touch ? '#fff' : '#00f2ff';
-                ctx.lineWidth = 12;
-                ctx.lineCap = 'round';
-                ctx.beginPath();
-                ctx.arc(cx, cy, this.player.r, this.player.a - this.player.w, this.player.a + this.player.w);
-                ctx.stroke();
-
-                // Ennemis
-                ctx.fillStyle = '#ff0055';
-                this.enemies.forEach(e => {
-                    ctx.beginPath(); ctx.arc(e.x, e.y, 8, 0, Math.PI*2); ctx.fill();
-                });
-                this.update();
-            }
-            requestAnimationFrame(() => this.render());
+    gameOver() {
+        this.state = 'MENU';
+        if (this.score > this.best) {
+            this.best = this.score;
+            localStorage.setItem('snake_best', this.best);
         }
-    };
+        alert("COMBAT RIG DÉTRUIT ! Score: " + this.score);
+        location.reload();
+    }
+};
 
-    // --- ECOUTEURS D'EVENEMENTS ---
-    window.addEventListener('touchstart', (e) => { 
-        if(app.state === 'PLAY') app.touch = true; 
-    }, {passive: true});
-    window.addEventListener('touchend', () => app.touch = false, {passive: true});
-    window.addEventListener('mousedown', () => { if(app.state === 'PLAY') app.touch = true; });
-    window.addEventListener('mouseup', () => app.touch = false);
-
-    app.render();
+// Touches clavier aussi au cas où
+document.addEventListener('keydown', (e) => {
+    if (e.which === 37) game.setDir(-1, 0);
+    if (e.which === 38) game.setDir(0, -1);
+    if (e.which === 39) game.setDir(1, 0);
+    if (e.which === 40) game.setDir(0, 1);
+});
 </script>
 </body>
-    </html>
-    
+                           </html>
+            

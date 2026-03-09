@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TITAN ONLINE | V16</title>
+    <title>TITAN ONLINE | V16.1</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -13,9 +13,11 @@
     <style>
         :root { --neon: #00f2ff; --danger: #ff0055; --gold: #ffd700; --bg: #020205; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
-        body { margin: 0; background: var(--bg); color: #fff; font-family: 'Orbitron', sans-serif; overflow: hidden; touch-action: none; }
+        /* CORRECTION : On enlève le touch-action:none du body pour que les boutons marchent */
+        body { margin: 0; background: var(--bg); color: #fff; font-family: 'Orbitron', sans-serif; overflow: hidden; }
         
-        canvas { display: block; position: fixed; inset: 0; z-index: 1; filter: brightness(1.1); }
+        /* CORRECTION : On met le blocage tactile uniquement sur le jeu */
+        canvas { display: block; position: fixed; inset: 0; z-index: 1; filter: brightness(1.1); touch-action: none; }
 
         /* INTERFACES */
         .screen { position: fixed; inset: 0; z-index: 2000; display: none; flex-direction: column; justify-content: center; align-items: center; background: rgba(0,0,0,0.92); backdrop-filter: blur(10px); }
@@ -30,11 +32,11 @@
         /* FORMULAIRE */
         input { 
             width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--neon); 
-            padding: 12px; color: #fff; font-family: 'Orbitron'; margin-bottom: 12px; border-radius: 4px;
+            padding: 12px; color: #fff; font-family: 'Orbitron'; margin-bottom: 12px; border-radius: 4px; font-size: 16px;
         }
 
         .btn { 
-            background: transparent; border: 1px solid var(--neon); color: var(--neon); padding: 14px; font-family: 'Orbitron'; font-weight: 700; cursor: pointer; width: 100%; text-transform: uppercase; margin: 6px 0; transition: 0.2s;
+            background: transparent; border: 1px solid var(--neon); color: var(--neon); padding: 14px; font-family: 'Orbitron'; font-weight: 700; cursor: pointer; width: 100%; text-transform: uppercase; margin: 6px 0; transition: 0.2s; pointer-events: auto;
         }
         .btn:active { background: var(--neon); color: #000; box-shadow: 0 0 15px var(--neon); }
         .btn-main { background: var(--neon); color: #000; border: none; font-size: 16px; font-weight: 900; }
@@ -44,13 +46,12 @@
         #hud b { color: var(--neon); font-size: 18px; text-shadow: 0 0 8px var(--neon); }
         .pause-trigger { pointer-events: auto; background: none; border: 1px solid var(--neon); color: var(--neon); padding: 5px 12px; font-family: 'Orbitron'; cursor: pointer; font-size: 10px; }
 
-        /* CLASSEMENT */
+        /* CLASSEMENT & ARSENAL */
         .list-box { background: rgba(0,0,0,0.6); border: 1px solid rgba(0,242,255,0.2); margin-top: 15px; padding: 10px; font-size: 11px; text-align: left; }
         .row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
-
-        /* ARSENAL */
         .stat-line { display: flex; justify-content: space-between; background: rgba(255,255,255,0.05); padding: 10px; margin: 5px 0; font-size: 11px; border-left: 3px solid var(--neon); }
-        #msg { color: var(--danger); font-size: 10px; margin-bottom: 10px; min-height: 15px; }
+        
+        #msg { color: var(--danger); font-size: 11px; margin-bottom: 10px; min-height: 15px; word-wrap: break-word; }
     </style>
 </head>
 <body>
@@ -65,10 +66,10 @@
         <div class="panel">
             <h1>TITAN</h1>
             <div id="msg"></div>
-            <input type="email" id="email" placeholder="EMAIL (ex: pilote@titan.com)">
-            <input type="password" id="pass" placeholder="MOT DE PASSE (6 car. min)">
-            <button class="btn btn-main" onclick="handleAuth('login')">SE CONNECTER</button>
-            <button class="btn" onclick="handleAuth('signup')">CRÉER UN COMPTE</button>
+            <input type="email" id="email" placeholder="Email (ex: pilote@test.fr)">
+            <input type="password" id="pass" placeholder="Mot de passe (6 car. min)">
+            <button class="btn btn-main" id="btn-login">SE CONNECTER</button>
+            <button class="btn" id="btn-signup">CRÉER UN COMPTE</button>
         </div>
     </div>
 
@@ -91,7 +92,6 @@
             <div class="stat-line"><span>BOUCLIER PLASMA</span> <span style="color:var(--neon)">MK-I (ACTIF)</span></div>
             <div class="stat-line"><span>SYSTÈME ROTATIF</span> <span style="color:var(--neon)">STANDARD</span></div>
             <div class="stat-line"><span>RÉSISTANCE COQUE</span> <span style="color:var(--neon)">100%</span></div>
-            <p style="font-size:9px; color:rgba(255,255,255,0.4); margin-top:15px;">Mises à jour MK-II disponibles prochainement.</p>
             <button class="btn btn-main" onclick="showScreen('scr-main')" style="margin-top:15px;">RETOUR</button>
         </div>
     </div>
@@ -120,21 +120,32 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const auth = firebase.auth();
 
-// --- AUTH LOGIC ---
+// --- CORRECTION : ÉVÈNEMENTS BOUTONS PLUS FIABLES SUR MOBILE ---
+document.getElementById('btn-login').addEventListener('click', () => handleAuth('login'));
+document.getElementById('btn-signup').addEventListener('click', () => handleAuth('signup'));
+
 function handleAuth(type) {
-    const email = document.getElementById('email').value;
+    const email = document.getElementById('email').value.trim();
     const pass = document.getElementById('pass').value;
     const msg = document.getElementById('msg');
     
-    if(email.length < 5 || pass.length < 6) {
-        msg.innerText = "Champs invalides (6 car. min)";
+    if(email === "" || pass === "") {
+        msg.innerText = "Remplis les deux champs !";
         return;
     }
 
+    msg.innerText = "Chargement...";
+
     if(type === 'login') {
-        auth.signInWithEmailAndPassword(email, pass).catch(e => msg.innerText = "Email ou mot de passe incorrect");
+        auth.signInWithEmailAndPassword(email, pass).catch(e => {
+            // Affiche la VRAIE erreur Firebase
+            msg.innerText = "Erreur: " + e.message;
+        });
     } else {
-        auth.createUserWithEmailAndPassword(email, pass).catch(e => msg.innerText = "Erreur : Compte déjà existant");
+        auth.createUserWithEmailAndPassword(email, pass).catch(e => {
+            // Affiche la VRAIE erreur Firebase
+            msg.innerText = "Erreur: " + e.message;
+        });
     }
 }
 
@@ -163,7 +174,7 @@ function loadLeaderboard() {
     });
 }
 
-// --- JEU (MOTEUR V16) ---
+// --- JEU ---
 let state = 'MENU', score = 0, isTouching = false;
 let player = { a: 0, rad: 105, w: 0.7, speed: 0.05, boost: 0.16 };
 let enemies = [];
@@ -207,14 +218,12 @@ function update() {
         let dx = cx - e.x, dy = cy - e.y, d = Math.sqrt(dx*dx + dy*dy);
         e.x += (dx/d)*e.s; e.y += (dy/d)*e.s;
         
-        // COLLISION BOUCLIER
         if(d < player.rad + 10 && d > player.rad - 15) {
             let pA = (Math.atan2(dy, dx) + Math.PI) % (Math.PI*2);
             let diff = Math.min(Math.abs(pA - (player.a % (Math.PI*2))), Math.PI*2 - Math.abs(pA - (player.a % (Math.PI*2))));
             if(diff < player.w) { enemies.splice(i, 1); score += 10; document.getElementById('v-score').innerText = score; }
         }
         
-        // GAME OVER
         if(d < 40) {
             state = 'MENU';
             const user = auth.currentUser;
@@ -231,18 +240,15 @@ function update() {
 function draw() {
     ctx.fillStyle = '#020205'; ctx.fillRect(0,0,w,h);
     
-    // Cœur Titan
     ctx.beginPath(); ctx.arc(cx, cy, 40, 0, Math.PI*2); 
     ctx.fillStyle = '#fff'; ctx.shadowBlur = 15; ctx.shadowColor = var(--neon);
     ctx.fill(); ctx.shadowBlur = 0;
 
     if(state === 'PLAY' || state === 'PAUSE') {
-        // Bouclier Plasma
         ctx.beginPath(); ctx.arc(cx, cy, player.rad, player.a - player.w, player.a + player.w);
         ctx.strokeStyle = isTouching ? var(--danger) : var(--neon);
         ctx.lineWidth = 14; ctx.lineCap = 'round'; ctx.stroke();
         
-        // Ennemis
         enemies.forEach(e => {
             ctx.fillStyle = var(--danger);
             ctx.beginPath(); ctx.arc(e.x, e.y, 8, 0, Math.PI*2); ctx.fill();
@@ -252,14 +258,13 @@ function draw() {
     requestAnimationFrame(draw);
 }
 
-// CONTRÔLES TACTILES
-window.addEventListener('touchstart', (e) => { 
-    if(state === 'PLAY' && e.target.tagName !== 'BUTTON') { isTouching = true; e.preventDefault(); }
+canvas.addEventListener('touchstart', (e) => { 
+    if(state === 'PLAY') { isTouching = true; e.preventDefault(); }
 }, {passive: false});
 window.addEventListener('touchend', () => isTouching = false);
 
 draw();
 </script>
 </body>
-                </html>
-                
+        </html>
+    
